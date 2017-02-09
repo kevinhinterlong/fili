@@ -4,8 +4,8 @@ package com.yahoo.bard.webservice.table.resolver;
 
 import static com.yahoo.bard.webservice.web.ErrorMessageFormat.NO_TABLE_FOR_NON_AGGREGATABLE;
 
-import com.yahoo.bard.webservice.data.dimension.Dimension;
 import com.yahoo.bard.webservice.table.PhysicalTable;
+import com.yahoo.bard.webservice.data.dimension.Dimension;
 import com.yahoo.bard.webservice.util.StreamUtils;
 import com.yahoo.bard.webservice.web.ErrorMessageFormat;
 
