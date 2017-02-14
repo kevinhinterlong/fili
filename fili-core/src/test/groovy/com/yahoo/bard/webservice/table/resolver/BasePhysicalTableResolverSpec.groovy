@@ -2,15 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.table.resolver
 
-import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.DAY
-import static org.joda.time.DateTimeZone.UTC
-
-import com.yahoo.bard.webservice.druid.model.query.AllGranularity
-import com.yahoo.bard.webservice.table.ConcretePhysicalTable
-import com.yahoo.bard.webservice.table.LogicalTable
 import com.yahoo.bard.webservice.table.PhysicalTable
-
-import com.google.common.collect.Sets
 
 import spock.lang.Shared
 import spock.lang.Specification

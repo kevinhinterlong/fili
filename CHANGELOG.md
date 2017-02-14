@@ -26,6 +26,7 @@ Current
     * TestDruidWebService assumes unknown query types behave like GroupBy, TimeSeries, and TopN
     * ResultSetResponseProcessor delegates to DruidResponseProcessor to build expected query schema, 
       allowing subclasses to override and extend the schema behavior
+
 - [Add dimension fields to fullView table format](https://github.com/yahoo/fili/pull/155)
 
 ### Deprecated:
