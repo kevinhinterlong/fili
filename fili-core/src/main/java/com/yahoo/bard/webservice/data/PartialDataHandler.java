@@ -1,4 +1,4 @@
-// Copyright 2016 Yahoo Inc.
+// Copyright 2017 Yahoo Inc.
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.data;
 
@@ -35,9 +35,9 @@ public class PartialDataHandler {
      * Find the request time grain intervals for which partial data is present for a given combination of request
      * metrics and dimensions (pulled from the API request and generated druid query).
      *
-     * @param apiRequest  api request made by the end user
-     * @param query  used to fetch data from druid
-     * @param physicalTables  the tables whose column availabilities are checked
+     * @param apiRequest api request made by the end user
+     * @param query used to fetch data from druid
+     * @param physicalTables the tables whose column availabilities are checked
      *
      * @return list of simplified intervals with incomplete data
      *
@@ -57,8 +57,7 @@ public class PartialDataHandler {
             throw new IllegalArgumentException(message);
         }
         return findMissingTimeGrainIntervals(
-                apiRequest,
-                query,
+                TableUtils.getColumnNames(apiRequest, query),
                 physicalTables,
                 new SimplifiedIntervalList(apiRequest.getIntervals()),
                 apiRequest.getGranularity()
@@ -79,23 +78,21 @@ public class PartialDataHandler {
      * present for a given combination of request metrics and dimensions (pulled from the API request and generated
      * druid query) at the specified granularity.
      *
-     * @param apiRequest  api request made by the end user
-     * @param query  used to fetch data from druid
-     * @param physicalTables  the tables whose column availabilities are checked
-     * @param requestedIntervals  The intervals that may not be fully satisfied
-     * @param granularity  The granularity at which to find missing intervals
+     * @param columnNames all the column names the request depends on
+     * @param physicalTables the tables whose column availabilities are checked
+     * @param requestedIntervals The intervals that may not be fully satisfied
+     * @param granularity the granularity at which to find missing intervals
      *
      * @return subintervals of the requested intervals with incomplete data
      */
     public SimplifiedIntervalList findMissingTimeGrainIntervals(
-            DataApiRequest apiRequest,
-            DruidAggregationQuery<?> query,
+            Set<String> columnNames,
             Set<PhysicalTable> physicalTables,
             @NotNull SimplifiedIntervalList requestedIntervals,
             Granularity granularity
     ) {
         SimplifiedIntervalList availableIntervals = physicalTables.stream()
-                .map(table -> getAvailability(table, TableUtils.getColumnNames(apiRequest, query)))
+                .map(table -> getAvailability(table, columnNames))
                 .flatMap(SimplifiedIntervalList::stream)
                 .collect(SimplifiedIntervalList.getCollector());
 
@@ -104,6 +101,7 @@ public class PartialDataHandler {
                 requestedIntervals,
                 granularity
         );
+
         if (granularity instanceof AllGranularity && !missingIntervals.isEmpty()) {
             missingIntervals = requestedIntervals;
         }
@@ -115,8 +113,8 @@ public class PartialDataHandler {
      * Given a table and a list of column names, get the intervals for those columns from the physical table then
      * merge into a single availability list.
      *
-     * @param physicalTable  The fact source for the columns
-     * @param columnNames  The names of the columns whose availability is being checked
+     * @param physicalTable the fact source for the columns
+     * @param columnNames the names of the columns whose availability is being checked
      *
      * @return the simplified available intervals
      */
@@ -130,10 +128,10 @@ public class PartialDataHandler {
      * Take a list of column names, get the intervals for those columns from the physical table then merge into a
      * single availability list by intersecting subintervals.
      *
-     * @param columnNames The names of the columns in the physical table
-     * @param physicalTable The physical table the columns appear in
+     * @param columnNames the names of the columns in the physical table
+     * @param physicalTable the physical table the columns appear in
      *
-     * @return The set of all intervals fully satisfied on the request columns for the physical table
+     * @return the set of all intervals fully satisfied on the request columns for the physical table
      */
     public SimplifiedIntervalList getIntersectSubintervalsForColumns(
             Collection<String> columnNames,
@@ -150,10 +148,10 @@ public class PartialDataHandler {
      * Take a list of column names, get the intervals for those columns from the physical table then merge into a
      * single availability list by unioning subintervals.
      *
-     * @param columnNames The names of the columns in the physical table
-     * @param physicalTable The physical table the columns appear in
+     * @param columnNames the names of the columns in the physical table
+     * @param physicalTable the physical table the columns appear in
      *
-     * @return The set of all intervals partially satisfied on the request columns for the physical table
+     * @return the set of all intervals partially satisfied on the request columns for the physical table
      */
     public SimplifiedIntervalList getUnionSubintervalsForColumns(
             Collection<String> columnNames,
