@@ -10,9 +10,12 @@ import com.google.common.collect.ImmutableMap;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.druid.timeline.DataSegment;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,6 +35,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class DataSourceMetadataService {
+    private static final Logger LOG = LoggerFactory.getLogger(DataSourceMetadataService.class);
 
     /**
      * The container that holds the segment metadata for every table. It should support concurrent access.
@@ -39,7 +43,8 @@ public class DataSourceMetadataService {
     private final Map<TableName, AtomicReference<ConcurrentSkipListMap<DateTime, Map<String, SegmentInfo>>>>
             allSegmentsByTime;
 
-    private final Map<TableName, AtomicReference<ImmutableMap<String, Set<Interval>>>> allSegmentsByColumn;
+    private final Map<TableName, AtomicReference<ImmutableMap<String, Set<Interval>>>>
+            allSegmentsByColumn;
 
     /**
      * The collector that accumulates partitions of a segment.
@@ -138,9 +143,15 @@ public class DataSourceMetadataService {
      *
      * @param physicalTableName the table to get the column and availability for
      *
-     * @return a map of column name to a set of avialable intervals
+     * @return a map of column name to a set of available intervals
      */
     public Map<String, Set<Interval>> getAvailableIntervalsByTable(TableName physicalTableName) {
-        return allSegmentsByColumn.get(physicalTableName).get();
+
+        if (!allSegmentsByColumn.containsKey(physicalTableName)) {
+            LOG.warn("Could not find availability data for physical table {}", physicalTableName.asName());
+        }
+
+        return allSegmentsByColumn.getOrDefault(
+                physicalTableName, new AtomicReference<>(ImmutableMap.copyOf(Collections.emptyMap()))).get();
     }
 }

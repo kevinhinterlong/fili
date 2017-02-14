@@ -3,7 +3,7 @@
 package com.yahoo.bard.webservice.metadata
 
 import com.yahoo.bard.webservice.application.JerseyTestBinder
-import com.yahoo.bard.webservice.data.config.names.TableName
+
 import com.yahoo.bard.webservice.table.PhysicalTableDictionary
 
 import java.util.concurrent.atomic.AtomicReference

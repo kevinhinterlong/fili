@@ -12,6 +12,7 @@ import com.yahoo.bard.webservice.data.dimension.DimensionDictionary;
 import com.yahoo.bard.webservice.data.metric.MetricColumn;
 import com.yahoo.bard.webservice.data.metric.MetricDictionary;
 import com.yahoo.bard.webservice.druid.model.query.Granularity;
+import com.yahoo.bard.webservice.metadata.DataSourceMetadataService;
 import com.yahoo.bard.webservice.table.Column;
 import com.yahoo.bard.webservice.table.ConcretePhysicalTable;
 import com.yahoo.bard.webservice.table.LogicalTable;
@@ -40,6 +41,8 @@ public abstract class BaseTableLoader implements TableLoader {
 
     protected final DateTimeZone defaultTimeZone;
 
+    private DataSourceMetadataService metadataService;
+
     /**
      * A table loader using a time context and a default time zone.
      *
@@ -56,33 +59,20 @@ public abstract class BaseTableLoader implements TableLoader {
         this(DateTimeZone.UTC);
     }
 
-    @Override
+    /**
+     * Load user configured tables into resource dictionary.
+     *
+     * @param dictionaries dictionary to be loaded with user configured tables
+     */
     public abstract void loadTableDictionary(ResourceDictionaries dictionaries);
 
-    /**
-     * Builds a table group.
-     * <p>
-     * Builds and loads the physical tables for the physical table definitions as well.
-     *
-     * @param logicalTableName  The logical table for the table group
-     * @param apiMetrics  The set of metric names surfaced to the api
-     * @param druidMetrics  Names of druid datasource metric columns
-     * @param tableDefinitions  A list of config objects for physical tables
-     * @param dictionaries  The container for all the data dictionaries
-     *
-     * @return A table group binding all the tables for a logical table view together.
-     *
-     * @deprecated logicalTableName is not used in TableGroup
-     */
-    @Deprecated
-    public TableGroup buildTableGroup(
-            String logicalTableName,
-            Set<ApiMetricName> apiMetrics,
-            Set<FieldName> druidMetrics,
-            Set<PhysicalTableDefinition> tableDefinitions,
-            ResourceDictionaries dictionaries
+    @Override
+    public void loadTableDictionary(
+            ResourceDictionaries dictionaries,
+            DataSourceMetadataService metadataService
     ) {
-        return buildTableGroup(apiMetrics, druidMetrics, tableDefinitions, dictionaries);
+        this.metadataService = metadataService;
+        this.loadTableDictionary(dictionaries);
     }
 
     /**
@@ -232,20 +222,6 @@ public abstract class BaseTableLoader implements TableLoader {
             TableGroup group,
             MetricDictionary metrics
     ) {
-
-        // All Logical tables support the dimension set for their table group
-        PhysicalTable firstPhysicalTable = group.getPhysicalTables().iterator().next();
-        Set<PhysicalTable> tables = group.getPhysicalTables();
-        for (Dimension dim : group.getDimensions()) {
-            // Select the first table with a non-default logical mapping to this dimension name
-            // otherwise, use the defaulting behavior from the first table in the list
-            PhysicalTable physicalTable = tables.stream()
-                    .filter(table -> table.hasLogicalMapping(dim.getApiName()))
-                    .findFirst()
-                    .orElse(firstPhysicalTable);
-
-        }
-
         LogicalTable logicalTable = new LogicalTable(
                 name,
                 category,
@@ -277,7 +253,10 @@ public abstract class BaseTableLoader implements TableLoader {
         PhysicalTable existingTable = dictionaries.getPhysicalDictionary().get(definition.getName().asName());
         if (existingTable == null) {
             // Build the physical table
-            existingTable = buildPhysicalTable(definition, metricNames, dictionaries.getDimensionDictionary());
+            existingTable = buildPhysicalTable(definition,
+                    metricNames,
+                    dictionaries.getDimensionDictionary()
+            );
 
             // Add the table to the dictionary
             LOG.debug("Physical table: {} \n\n" + "Cache: {} ",
@@ -322,7 +301,8 @@ public abstract class BaseTableLoader implements TableLoader {
                 definition.getName(),
                 definition.getGrain(),
                 columns,
-                definition.getLogicalToPhysicalNames()
+                definition.getLogicalToPhysicalNames(),
+                metadataService
         );
     }
 }

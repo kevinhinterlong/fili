@@ -23,14 +23,14 @@ public interface Table {
     /**
      * The name for this table.
      *
-     * @return The table name
+     * @return the table name
      */
     String getName();
 
     /**
      * Getter for set of dimensions.
      *
-     * @return Set of Dimension
+     * @return set of Dimension
      */
     default LinkedHashSet<Dimension> getDimensions() {
         return getSchema().getColumns(DimensionColumn.class).stream()

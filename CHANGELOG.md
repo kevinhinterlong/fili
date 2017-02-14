@@ -9,6 +9,10 @@ Current
 -------
 
 ### Added:
+- [CompositePhsyicalTable Core Components Refactor](https://github.com/yahoo/fili/pull/179)
+    * Added `ConcretePhysicalTable` and `ConcreteAvailability` to model table in druid datasource and its availabillity in the new table availability structure
+    * Added method `containsColumn` to `Schema`
+
 - [Refactor DatasourceMetaDataService to fit composite table needs](https://github.com/yahoo/fili/pull/173)
     * `DataSourceMetadataService` also stores interval data from segment data as intervals by column name map and provides method `getAvailableIntervalsByTable` to retrieve it
 
@@ -21,6 +25,11 @@ Current
       `user` field in the `Preface` log block to `NO_USER_PRINCIPAL`.
 
 ### Changed:
+- [CompositePhsyicalTable Core Components Refactor](https://github.com/yahoo/fili/pull/179)
+    * `ConfigurationLoader` now takes an additional constructor argument `DataSourceMetadataService` for creating tables
+    * `findMissingRequestTimeGrainIntervals` method in `PartialDataHandler` now takes `DataSourceConstraint`
+    *
+
 - [Refactor DatasourceMetaDataService to fit composite table needs](https://github.com/yahoo/fili/pull/173)
     * `BasePhysicalTable` now stores table name as the `TableName` instead of `String`
     * `SegmentInfo` now stores dimension and metrics from segment data for constructing column to available interval map
@@ -37,7 +46,8 @@ Current
 - [Add dimension fields to fullView table format](https://github.com/yahoo/fili/pull/155)
 
 ### Deprecated:
-
+- [CompositePhsyicalTable Core Components Refactor](https://github.com/yahoo/fili/pull/179)
+    * `getAvailability` method on `PartialDataHandler` is now deprecated since the logic is pushed into `Availability`
 
 
 ### Fixed:
@@ -50,7 +60,12 @@ Current
 
 
 ### Removed:
-
+- [CompositePhsyicalTable Core Components Refactor](https://github.com/yahoo/fili/pull/179)
+    * Removed deprecated method `findMissingRequestTimeGrainIntervals` from `PartialDataHandler`
+    * Removed `permissive_column_availability` feature flag support and corresponding functionality in `PartialDataHandler`
+    * Removed `getIntersectSubintervalsForColumns` and `getUnionSubintervalsForColumns` from `PartialDataHandler` since the logic is pushed into `Availability` now
+    * Removed `getIntervalsByColumnName`, `resetColumns` and `hasLogicalMapping` methods in `PhysicalTable` since no longer needed with the availability structure
+    * Removed deprecated `buildTableGroup` method in `BaseTableLoader`
 
 
 v0.7.36 - 2017/01/30

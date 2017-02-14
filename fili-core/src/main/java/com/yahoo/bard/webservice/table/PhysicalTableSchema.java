@@ -14,7 +14,7 @@ import javax.validation.constraints.NotNull;
 /**
  * The schema for a physical table.
  */
-public class PhysicalTableSchema extends BaseSchema implements Schema {
+public class PhysicalTableSchema extends BaseSchema {
 
     private final ZonedTimeGrain timeGrain;
     private final Map<String, String> logicalToPhysicalColumnNames;
@@ -93,7 +93,7 @@ public class PhysicalTableSchema extends BaseSchema implements Schema {
     /**
      * Returns true if the mapping of names is populated for this logical name.
      *
-     * @param logicalName the name of a metric or dimension column
+     * @param logicalName the logical name of a metric or dimension column
      *
      * @return true if this table supports this column explicitly
      */

@@ -84,7 +84,10 @@ public class TestBinderFactory extends AbstractBinderFactory {
         };
         tableLoader = new TableLoader() {
             @Override
-            public void loadTableDictionary(ResourceDictionaries dictionaries) {
+            public void loadTableDictionary(
+                    ResourceDictionaries dictionaries,
+                    DataSourceMetadataService metadataService
+            ) {
                 // Empty
             }
         };
@@ -198,10 +201,16 @@ public class TestBinderFactory extends AbstractBinderFactory {
     protected ConfigurationLoader buildConfigurationLoader(
             DimensionLoader dimensionLoader,
             MetricLoader metricLoader,
-            TableLoader tableLoader
+            TableLoader tableLoader,
+            DataSourceMetadataService metadataService
     ) {
         // Store the config loader so that we can get access to it, and then return it
-        this.configurationLoader = super.buildConfigurationLoader(dimensionLoader, metricLoader, tableLoader);
+        this.configurationLoader = super.buildConfigurationLoader(
+                dimensionLoader,
+                metricLoader,
+                tableLoader,
+                metadataService
+        );
         return configurationLoader;
     }
 

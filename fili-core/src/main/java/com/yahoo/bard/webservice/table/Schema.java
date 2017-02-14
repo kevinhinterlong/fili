@@ -21,6 +21,15 @@ public interface Schema {
     Set<Column> getColumns();
 
     /**
+     * Check if schema contains a column.
+     *
+     * @param name the column name to check if present
+     *
+     * @return true if column name is present in this schema or false otherwise
+     */
+    boolean containsColumn(String name);
+
+    /**
      * Getter for set of columns by sub-type.
      *
      * @param columnClass  The class of columns to to search
@@ -30,6 +39,19 @@ public interface Schema {
      */
     default <T extends Column> LinkedHashSet<T> getColumns(Class<T> columnClass) {
         return Utils.getSubsetByType(getColumns(), columnClass);
+    }
+
+    /**
+     * Given a column type and name, return the column of the expected type.
+     *
+     * @param name the name on the column
+     *
+     * @return the an optional containing the column of the name and type specified, if any
+     */
+    default Optional<Column> getColumn(String name) {
+        return getColumns().stream()
+                .filter(column -> column.getName().equals(name))
+                .findFirst();
     }
 
     /**

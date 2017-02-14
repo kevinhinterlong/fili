@@ -67,10 +67,10 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
     /**
      * Datasource metadata loader fetches data from the druid endpoint and updates the dimensions on that table.
      *
-     * @param physicalTableDictionary  The physical tables to update
-     * @param metadataService  The service that will store the metadata loaded by this loader
-     * @param druidWebService  The druid webservice to query
-     * @param mapper  Object mapper to parse druid metadata
+     * @param physicalTableDictionary the physical tables to update
+     * @param metadataService the service that will store the metadata loaded by this loader
+     * @param druidWebService the druid webservice to query
+     * @param mapper object mapper to parse druid metadata
      */
     public DataSourceMetadataLoader(
             PhysicalTableDictionary physicalTableDictionary,
@@ -109,7 +109,7 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
     /**
      * Queries the data mart for updated datasource metadata and then updates the physical table.
      *
-     * @param table  The physical table to be updated.
+     * @param table the physical table to be updated.
      */
     protected void queryDataSourceMetadata(ConcretePhysicalTable table) {
         String resourcePath = String.format(DATASOURCE_METADATA_QUERY_FORMAT, table.getFactTableName());
@@ -172,9 +172,9 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
      *   }"""
      * </pre>
      *
-     * @param table  The table to inject into this callback.
+     * @param table the table to inject into this callback.
      *
-     * @return The callback itself.
+     * @return the callback itself.
      */
     protected final SuccessCallback buildDataSourceMetadataSuccessCallback(ConcretePhysicalTable table) {
         return new SuccessCallback() {
@@ -196,7 +196,7 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
     /**
      * Return when this loader ran most recently.
      *
-     * @return The date and time of the most recent execution of this loader.
+     * @return the date and time of the most recent execution of this loader.
      */
     public DateTime getLastRunTimestamp() {
         return lastRunTimestamp.get();
@@ -205,9 +205,9 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
     /**
      * Get a default callback for an http error.
      *
-     * @param table  The PhysicalTable that the error callback will relate to.
+     * @param table the PhysicalTable that the error callback will relate to.
      *
-     * @return A newly created http error callback object.
+     * @return a newly created http error callback object.
      */
     protected HttpErrorCallback getErrorCallback(ConcretePhysicalTable table) {
         return new TaskHttpErrorCallback(table);
@@ -222,7 +222,7 @@ public class DataSourceMetadataLoader extends Loader<Boolean> {
         /**
          * Constructor.
          *
-         * @param table  PhysicalTable that this error callback is tied to
+         * @param table physicalTable that this error callback is tied to
          */
         TaskHttpErrorCallback(ConcretePhysicalTable table) {
             this.table = table;

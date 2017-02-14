@@ -28,6 +28,10 @@ public class BaseSchema implements Schema {
         return columns;
     }
 
+    @Override
+    public boolean containsColumn(String name) {
+        return getColumns().stream().map(Column::getName).anyMatch(name::equals);
+    }
 
     @Override
     public boolean equals(Object o) {
