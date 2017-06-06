@@ -32,8 +32,8 @@ import java.util.Set;
  */
 public class Simple {
 
-    private static final String METRIC1 = "DELTA";
-    private static final String METRIC2 = "ADDED";
+    private static final String METRIC1 = "ADDED";
+    private static final String METRIC2 = "DELETED";
 
     private Simple() {
 
@@ -58,8 +58,8 @@ public class Simple {
                 DefaultTimeGrain.DAY,
                 null,
                 Arrays.asList(
-                        new DoubleSumAggregation(METRIC1, METRIC1)
-                        //                        new DoubleSumAggregation(METRIC2, METRIC2)
+                        new DoubleSumAggregation(METRIC1, METRIC1),
+                        new DoubleSumAggregation(METRIC2, METRIC2)
                 ),
                 Collections.emptyList(),
                 Arrays.asList(

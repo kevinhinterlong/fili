@@ -12,6 +12,7 @@ import com.yahoo.bard.webservice.druid.model.query.Granularity;
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery;
 import com.yahoo.bard.webservice.mock.DruidResponse;
 import com.yahoo.bard.webservice.mock.Simple;
+import com.yahoo.bard.webservice.mock.TimeseriesResult;
 import com.yahoo.bard.webservice.test.Database;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,14 +32,18 @@ import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.h2.jdbc.JdbcSQLException;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.List;
@@ -75,15 +80,17 @@ public class SQLConverter {
 
         Connection connection = Database.getDatabase();
         String generatedSql = buildTimeSeriesQuery(connection, druidQuery, builder());
+        int timeGranularity = getTimeGranularity(druidQuery.getGranularity());
 
-        return query(druidQuery, generatedSql, connection);
+        return query(druidQuery, generatedSql, connection, timeGranularity);
     }
 
-    public static JsonNode query(DruidQuery<?> druidQuery, String sql, Connection connection) throws Exception {
+    public static JsonNode query(DruidQuery<?> druidQuery, String sql, Connection connection, int timeGranularity)
+            throws Exception {
         LOG.debug("Executing \n{}", sql);
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
              ResultSet resultSet = preparedStatement.executeQuery()) {
-            return read(druidQuery, connection, resultSet);
+            return read(druidQuery, connection, resultSet, timeGranularity);
         } catch (JdbcSQLException e) {
             LOG.warn("Failed to query database {} with {}", connection.getCatalog(), sql);
             throw new RuntimeException("Could not finish query", e);
@@ -97,27 +104,80 @@ public class SQLConverter {
      * @param druidQuery the druid query to be made.
      * @param connection the connection to the database.
      * @param resultSet  the result set of the druid query.
+     * @param timeGranularity
      * @return druid-like result from query.
      */
-    private static JsonNode read(DruidQuery<?> druidQuery, Connection connection, ResultSet resultSet)
+    private static JsonNode read(
+            DruidQuery<?> druidQuery,
+            Connection connection,
+            ResultSet resultSet,
+            int timeGranularity
+    )
             throws Exception {
         // result set cannot be reset after rows have been read, this consumes results by reading them
-        Database.ResultSetFormatter rf = new Database.ResultSetFormatter();
-        rf.resultSet(resultSet);
-        LOG.debug("Reading results \n{}", rf.string());
+        // Database.ResultSetFormatter rf = new Database.ResultSetFormatter();
+        // rf.resultSet(resultSet);
+        // LOG.debug("Reading results \n{}", rf.string());
 
         int rows = 0;
+        DruidResponse<TimeseriesResult> timeseriesResultDruidResponse = new DruidResponse<>();
         while (resultSet.next()) {
             ++rows;
-            // process
+            ResultSetMetaData rsmd = resultSet.getMetaData();
+            //read 3 columns and parse as time
+            //create a druidResponse
+            DateTime resultTimeStamp = new DateTime(DateTimeZone.UTC);
+            if (timeGranularity >= 1) {
+                int year = resultSet.getInt(1);
+                resultTimeStamp = resultTimeStamp.withYear(year);
+            }
+            if (timeGranularity >= 2) {
+                int month = resultSet.getInt(2);
+                resultTimeStamp = resultTimeStamp.withMonthOfYear(month);
+            } else {
+                resultTimeStamp = resultTimeStamp.withMonthOfYear(0);
+            }
+            if (timeGranularity >= 3) {
+                int weekOfYear = resultSet.getInt(3);
+                resultTimeStamp = resultTimeStamp.withWeekOfWeekyear(weekOfYear);
+            } else {
+                resultTimeStamp = resultTimeStamp.withWeekOfWeekyear(0);
+            }
+            if (timeGranularity >= 4) {
+                int dayOfYear = resultSet.getInt(4);
+                resultTimeStamp = resultTimeStamp.withDayOfYear(dayOfYear);
+            } else {
+                resultTimeStamp = resultTimeStamp.withDayOfYear(0);
+            }
+            if (timeGranularity >= 5) {
+                int hourOfDay = resultSet.getInt(5);
+                resultTimeStamp = resultTimeStamp.withHourOfDay(hourOfDay);
+            } else {
+                resultTimeStamp = resultTimeStamp.withHourOfDay(0);
+            }
+            if (timeGranularity >= 6) {
+                int minuteOfHour = resultSet.getInt(6);
+                resultTimeStamp = resultTimeStamp.withMinuteOfHour(minuteOfHour);
+            } else {
+                resultTimeStamp = resultTimeStamp.withMinuteOfHour(0);
+            }
+            resultTimeStamp = resultTimeStamp.withSecondOfMinute(0).withMillisOfSecond(0);
+
+            TimeseriesResult result = new TimeseriesResult(resultTimeStamp);
+            for (int i = timeGranularity + 1; i <= rsmd.getColumnCount(); i++) {
+                String columnName = rsmd.getColumnName(i);
+                String val = resultSet.getString(i);
+                result.add(columnName, val);
+            }
+
+            timeseriesResultDruidResponse.results.add(result);
         }
         LOG.debug("Fetched {} rows.", rows);
 
         ObjectMapper objectMapper = new ObjectMapper();
 
         LOG.debug("Original Query\n {}", objectMapper.valueToTree(druidQuery));
-        DruidResponse druidResponse = Simple.druidResponse();
-        JsonNode druidResponseJson = objectMapper.valueToTree(druidResponse);
+        JsonNode druidResponseJson = objectMapper.valueToTree(timeseriesResultDruidResponse);
         LOG.debug("Fake Druid Response\n {}", druidResponseJson);
 
         return druidResponseJson;
@@ -179,6 +239,7 @@ public class SQLConverter {
 
         // =============================================================================================
 
+        //this makes a group by on all the parts in the sublist
         List<RexNode> times = Arrays.asList(
                 builder.call(SqlStdOperatorTable.YEAR, builder.field(timeCol)),
                 builder.call(SqlStdOperatorTable.MONTH, builder.field(timeCol)),
@@ -187,27 +248,29 @@ public class SQLConverter {
                 builder.call(SqlStdOperatorTable.HOUR, builder.field(timeCol)),
                 builder.call(SqlStdOperatorTable.MINUTE, builder.field(timeCol))
         );
-        int length = getLength(druidQuery.getGranularity());
+        int timeGranularity = getTimeGranularity(druidQuery.getGranularity());
 
         //are there any custom aggregations or can we just list them all in an enum
         if (druidQuery.getAggregations().size() != 0) { // group by aggregations
             LOG.debug("Adding aggregations { {} }", druidQuery.getAggregations());
 
-            //this makes a group by on all the parts in the sublist
-            RelBuilder.GroupKey groupByTime = builder.groupKey(
-                    times.subList(0, length)
-            );
-
-            druidQuery.getAggregations().forEach(aggregation -> {
-                builder.aggregate(
-                        groupByTime, // how to do grouping on time with granularity? UDF/SQL/manual in java?
-                        AggregationType.getAggregation(
+            List<RelBuilder.AggCall> aggCalls = druidQuery.getAggregations()
+                    .stream()
+                    .map(aggregation -> {
+                        return AggregationType.getAggregation(
                                 AggregationType.fromDruidType(aggregation.getType()),
                                 builder,
                                 aggregation.getFieldName()
-                        )
-                );
-            });
+                        );
+                    })
+                    .collect(Collectors.toList());
+
+            builder.aggregate(
+                    builder.groupKey(times.subList(0, timeGranularity)),
+                    // how to do grouping on time with granularity? UDF/SQL/manual in java?
+                    aggCalls
+            );
+
         }
 
         // =============================================================================================
@@ -216,7 +279,7 @@ public class SQLConverter {
 
         // =============================================================================================
 
-        builder.sort(builder.fields().subList(0, length)); // order by same time as grouping
+        builder.sort(builder.fields().subList(0, timeGranularity)); // order by same time as grouping
 
         // =============================================================================================
 
@@ -229,7 +292,7 @@ public class SQLConverter {
         return relToSql(builder);
     }
 
-    private static int getLength(Granularity granularity) {
+    private static int getTimeGranularity(Granularity granularity) {
         if (!(granularity instanceof DefaultTimeGrain)) {
             throw new IllegalStateException("Must be a DefaultTimeGrain");
         }
