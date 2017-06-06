@@ -7,9 +7,6 @@ import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
 import com.yahoo.bard.webservice.druid.model.DefaultQueryType;
 import com.yahoo.bard.webservice.druid.model.QueryType;
 import com.yahoo.bard.webservice.druid.model.aggregation.Aggregation;
-import com.yahoo.bard.webservice.druid.model.postaggregation.ArithmeticPostAggregation;
-import com.yahoo.bard.webservice.druid.model.postaggregation.FieldAccessorPostAggregation;
-import com.yahoo.bard.webservice.druid.model.postaggregation.PostAggregation;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
 import com.yahoo.bard.webservice.druid.model.query.Granularity;
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery;
@@ -27,7 +24,6 @@ import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -48,7 +44,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -193,8 +188,7 @@ public class SQLConverter {
             }
 
             druidQuery.getPostAggregations().forEach(postAggregation -> {
-                ArithmeticPostAggregation ap = (ArithmeticPostAggregation) postAggregation;
-                Double postAggResult = getPostAggregationResult(ap, sqlResults);
+                Double postAggResult = PostAggregationEvaluator.evaluate(postAggregation, sqlResults);
                 result.add(postAggregation.getName(), postAggResult);
             });
 
@@ -211,48 +205,6 @@ public class SQLConverter {
         return druidResponseJson;
     }
 
-    private static Double getPostAggregationResult(
-            ArithmeticPostAggregation ap,
-            Map<String, String> sqlResults
-    ) {
-        switch (ap.getFn()) {
-            case PLUS:
-                Double sum = 0D;
-                for (PostAggregation postAgg : ap.getFields()) {
-                    FieldAccessorPostAggregation field = (FieldAccessorPostAggregation) postAgg;
-                    sum += Double.parseDouble(sqlResults.get(field.getFieldName()));
-                }
-                return sum;
-            case MULTIPLY:
-                Double prod = 1D;
-                for (PostAggregation postAgg : ap.getFields()) {
-                    FieldAccessorPostAggregation field = (FieldAccessorPostAggregation) postAgg;
-                    prod *= Double.parseDouble(sqlResults.get(field.getFieldName()));
-                }
-                return prod;
-            case MINUS:
-                if (ap.getFields().size() != 2) {
-                    throw new IllegalStateException("Can only subtract on two fields");
-                }
-                FieldAccessorPostAggregation firstSubtract = (FieldAccessorPostAggregation) ap.getFields().get(0);
-                FieldAccessorPostAggregation secondSubtract = (FieldAccessorPostAggregation) ap.getFields().get(1);
-                Double firstAsDoubleSub = Double.parseDouble(sqlResults.get(firstSubtract.getFieldName()));
-                Double secondAsDoubleSub = Double.parseDouble(sqlResults.get(secondSubtract.getFieldName()));
-                return firstAsDoubleSub - secondAsDoubleSub;
-            case DIVIDE:
-                if (ap.getFields().size() != 2) {
-                    throw new IllegalStateException("Can only divide on two fields");
-                }
-                FieldAccessorPostAggregation firstDivide = (FieldAccessorPostAggregation) ap.getFields().get(0);
-                FieldAccessorPostAggregation secondDivide = (FieldAccessorPostAggregation) ap.getFields().get(1);
-                Double firstAsDoubleDiv = Double.parseDouble(sqlResults.get(firstDivide.getFieldName()));
-                Double secondAsDoubleDiv = Double.parseDouble(sqlResults.get(secondDivide.getFieldName()));
-                // todo don't divide by zero
-                return firstAsDoubleDiv / secondAsDoubleDiv;
-        }
-        throw new UnsupportedOperationException("Can't do post aggregation " + ap);
-    }
-
     public static String buildTimeSeriesQuery(Connection connection, TimeSeriesQuery druidQuery, RelBuilder builder)
             throws SQLException {
         initRelToSqlConverter(connection);
@@ -266,7 +218,7 @@ public class SQLConverter {
 
         // =============================================================================================
 
-        // select dimensions/metrics? This might not be needed
+        // select dimensions/metrics? This section might not be needed
         if (druidQuery.getDimensions().size() != 0) {
             LOG.debug("Adding dimensions { {} }", druidQuery.getDimensions());
             builder.project(druidQuery.getDimensions()
@@ -330,6 +282,7 @@ public class SQLConverter {
                         return AggregationType.getAggregation(
                                 AggregationType.fromDruidType(aggregation.getType()),
                                 builder,
+                                ALIAS,
                                 aggregation.getFieldName()
                         );
                     })
@@ -338,7 +291,7 @@ public class SQLConverter {
             builder.aggregate(
                     builder.groupKey(
                             times.subList(0, timeGranularity)
-                            // add other dimensions in here to group by
+                            // todo group by queries have dimensions here
                     ),
                     // How to bucket time with granularity? UDF/SQL/manual in java? as of now sql
                     aggCalls
@@ -348,10 +301,12 @@ public class SQLConverter {
 
         // =============================================================================================
 
+        // todo make something like PostAggregationEvaluator for filters
         // add WHERE/filters here
 
         // =============================================================================================
 
+        // todo check descending
         builder.sort(builder.fields().subList(0, timeGranularity)); // order by same time as grouping
 
         // =============================================================================================
@@ -387,49 +342,6 @@ public class SQLConverter {
         }
     }
 
-    public enum AggregationType {
-        SUM("sum"),
-        MIN("min"),
-        MAX("max");
-
-        private final String type;
-
-        AggregationType(String type) {
-            this.type = type;
-        }
-
-        public static AggregationType fromDruidType(String type) {
-            for (AggregationType a : values()) {
-                if (type.toLowerCase().contains(a.type)) {
-                    return a;
-                }
-            }
-            throw new InputMismatchException("No corresponding type for " + type);
-        }
-
-        public static RelBuilder.AggCall getAggregation(AggregationType a, RelBuilder builder, String fieldName) {
-            String alias = SQLConverter.ALIAS;
-            SqlAggFunction aggFunction = null;
-            switch (a) {
-                case SUM:
-                    aggFunction = SqlStdOperatorTable.SUM;
-                    break;
-                case MAX:
-                    aggFunction = SqlStdOperatorTable.MAX;
-                    break;
-                case MIN:
-                    aggFunction = SqlStdOperatorTable.MIN;
-                    break;
-            }
-
-            if (aggFunction != null) {
-                return builder.aggregateCall(aggFunction, false, null, alias + fieldName, builder.field(fieldName));
-            }
-
-            throw new UnsupportedOperationException("No corresponding AggCall for " + a);
-        }
-    }
-
     private static void initRelToSqlConverter(final Connection connection) throws SQLException {
         if (relToSql == null) {
             relToSql = new RelToSqlConverter(SqlDialect.create(connection.getMetaData()));
@@ -444,9 +356,6 @@ public class SQLConverter {
     public static void main(String[] args) throws Exception {
         DruidAggregationQuery<?> druidQuery = Simple.timeSeriesQuery("WIKITICKER");
         JsonNode jsonNode = convert(druidQuery);
-        //        Connection database = Database.getDatabase();
-        //        test(database);
-        // todo validate?
     }
 
     public static RelBuilder builder() {
