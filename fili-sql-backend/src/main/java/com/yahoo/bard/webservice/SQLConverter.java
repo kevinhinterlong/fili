@@ -6,8 +6,11 @@ package com.yahoo.bard.webservice;
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
 import com.yahoo.bard.webservice.druid.model.DefaultQueryType;
 import com.yahoo.bard.webservice.druid.model.QueryType;
+import com.yahoo.bard.webservice.druid.model.aggregation.Aggregation;
+import com.yahoo.bard.webservice.druid.model.postaggregation.ArithmeticPostAggregation;
+import com.yahoo.bard.webservice.druid.model.postaggregation.FieldAccessorPostAggregation;
+import com.yahoo.bard.webservice.druid.model.postaggregation.PostAggregation;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
-import com.yahoo.bard.webservice.druid.model.query.DruidQuery;
 import com.yahoo.bard.webservice.druid.model.query.Granularity;
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery;
 import com.yahoo.bard.webservice.mock.DruidResponse;
@@ -43,10 +46,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +59,7 @@ import java.util.stream.Collectors;
  */
 public class SQLConverter {
     private static final Logger LOG = LoggerFactory.getLogger(SQLConverter.class);
+    private static final String ALIAS = "ALIAS_";
     private static RelToSqlConverter relToSql;
 
     /**
@@ -85,7 +91,7 @@ public class SQLConverter {
         return query(druidQuery, generatedSql, connection, timeGranularity);
     }
 
-    public static JsonNode query(DruidQuery<?> druidQuery, String sql, Connection connection, int timeGranularity)
+    public static JsonNode query(TimeSeriesQuery druidQuery, String sql, Connection connection, int timeGranularity)
             throws Exception {
         LOG.debug("Executing \n{}", sql);
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -108,7 +114,7 @@ public class SQLConverter {
      * @return druid-like result from query.
      */
     private static JsonNode read(
-            DruidQuery<?> druidQuery,
+            TimeSeriesQuery druidQuery,
             Connection connection,
             ResultSet resultSet,
             int timeGranularity
@@ -118,6 +124,20 @@ public class SQLConverter {
         // Database.ResultSetFormatter rf = new Database.ResultSetFormatter();
         // rf.resultSet(resultSet);
         // LOG.debug("Reading results \n{}", rf.string());
+        Map<String, Function<String, Object>> resultMapper = druidQuery.getAggregations()
+                .stream()
+                .collect(Collectors.toMap(Aggregation::getName, aggregation -> {
+                    Function<String, Object> typeMapper;
+                    if (aggregation.getType().toLowerCase().contains("long")) {
+                        typeMapper = Long::parseLong;
+                    } else if (aggregation.getType().toLowerCase().contains("double")) {
+                        typeMapper = Double::parseDouble;
+                    } else {
+                        typeMapper = Double::parseDouble;
+                    }
+                    return typeMapper;
+                }));
+
 
         int rows = 0;
         DruidResponse<TimeseriesResult> timeseriesResultDruidResponse = new DruidResponse<>();
@@ -164,11 +184,19 @@ public class SQLConverter {
             resultTimeStamp = resultTimeStamp.withSecondOfMinute(0).withMillisOfSecond(0);
 
             TimeseriesResult result = new TimeseriesResult(resultTimeStamp);
+            Map<String, String> sqlResults = new HashMap<>();
             for (int i = timeGranularity + 1; i <= rsmd.getColumnCount(); i++) {
-                String columnName = rsmd.getColumnName(i);
+                String columnName = rsmd.getColumnName(i).replace(ALIAS, "");
                 String val = resultSet.getString(i);
-                result.add(columnName, val);
+                sqlResults.put(columnName, val);
+                result.add(columnName, resultMapper.get(columnName).apply(val));
             }
+
+            druidQuery.getPostAggregations().forEach(postAggregation -> {
+                ArithmeticPostAggregation ap = (ArithmeticPostAggregation) postAggregation;
+                Double postAggResult = getPostAggregationResult(ap, sqlResults);
+                result.add(postAggregation.getName(), postAggResult);
+            });
 
             timeseriesResultDruidResponse.results.add(result);
         }
@@ -181,6 +209,48 @@ public class SQLConverter {
         LOG.debug("Fake Druid Response\n {}", druidResponseJson);
 
         return druidResponseJson;
+    }
+
+    private static Double getPostAggregationResult(
+            ArithmeticPostAggregation ap,
+            Map<String, String> sqlResults
+    ) {
+        switch (ap.getFn()) {
+            case PLUS:
+                Double sum = 0D;
+                for (PostAggregation postAgg : ap.getFields()) {
+                    FieldAccessorPostAggregation field = (FieldAccessorPostAggregation) postAgg;
+                    sum += Double.parseDouble(sqlResults.get(field.getFieldName()));
+                }
+                return sum;
+            case MULTIPLY:
+                Double prod = 1D;
+                for (PostAggregation postAgg : ap.getFields()) {
+                    FieldAccessorPostAggregation field = (FieldAccessorPostAggregation) postAgg;
+                    prod *= Double.parseDouble(sqlResults.get(field.getFieldName()));
+                }
+                return prod;
+            case MINUS:
+                if (ap.getFields().size() != 2) {
+                    throw new IllegalStateException("Can only subtract on two fields");
+                }
+                FieldAccessorPostAggregation firstSubtract = (FieldAccessorPostAggregation) ap.getFields().get(0);
+                FieldAccessorPostAggregation secondSubtract = (FieldAccessorPostAggregation) ap.getFields().get(1);
+                Double firstAsDoubleSub = Double.parseDouble(sqlResults.get(firstSubtract.getFieldName()));
+                Double secondAsDoubleSub = Double.parseDouble(sqlResults.get(secondSubtract.getFieldName()));
+                return firstAsDoubleSub - secondAsDoubleSub;
+            case DIVIDE:
+                if (ap.getFields().size() != 2) {
+                    throw new IllegalStateException("Can only divide on two fields");
+                }
+                FieldAccessorPostAggregation firstDivide = (FieldAccessorPostAggregation) ap.getFields().get(0);
+                FieldAccessorPostAggregation secondDivide = (FieldAccessorPostAggregation) ap.getFields().get(1);
+                Double firstAsDoubleDiv = Double.parseDouble(sqlResults.get(firstDivide.getFieldName()));
+                Double secondAsDoubleDiv = Double.parseDouble(sqlResults.get(secondDivide.getFieldName()));
+                // todo don't divide by zero
+                return firstAsDoubleDiv / secondAsDoubleDiv;
+        }
+        throw new UnsupportedOperationException("Can't do post aggregation " + ap);
     }
 
     public static String buildTimeSeriesQuery(Connection connection, TimeSeriesQuery druidQuery, RelBuilder builder)
@@ -196,7 +266,7 @@ public class SQLConverter {
 
         // =============================================================================================
 
-        // select dimensions/metrics?
+        // select dimensions/metrics? This might not be needed
         if (druidQuery.getDimensions().size() != 0) {
             LOG.debug("Adding dimensions { {} }", druidQuery.getDimensions());
             builder.project(druidQuery.getDimensions()
@@ -266,8 +336,11 @@ public class SQLConverter {
                     .collect(Collectors.toList());
 
             builder.aggregate(
-                    builder.groupKey(times.subList(0, timeGranularity)),
-                    // how to do grouping on time with granularity? UDF/SQL/manual in java?
+                    builder.groupKey(
+                            times.subList(0, timeGranularity)
+                            // add other dimensions in here to group by
+                    ),
+                    // How to bucket time with granularity? UDF/SQL/manual in java? as of now sql
                     aggCalls
             );
 
@@ -285,9 +358,6 @@ public class SQLConverter {
 
         // find non overlapping intervals to include in meta part of druids response?
         // this will have to be implemented later if at all since we don't have information about partial data
-
-
-        // post aggregations
 
         return relToSql(builder);
     }
@@ -338,7 +408,7 @@ public class SQLConverter {
         }
 
         public static RelBuilder.AggCall getAggregation(AggregationType a, RelBuilder builder, String fieldName) {
-            String alias = "ALIAS_";
+            String alias = SQLConverter.ALIAS;
             SqlAggFunction aggFunction = null;
             switch (a) {
                 case SUM:
@@ -377,30 +447,6 @@ public class SQLConverter {
         //        Connection database = Database.getDatabase();
         //        test(database);
         // todo validate?
-    }
-
-    private static void test(Connection database) throws SQLException {
-        RelBuilder builder = builder();
-        // how to floor timestamp to hour/day/minute etc not working
-        builder.scan("WIKITICKER");
-        RexNode hour = builder.call(
-                SqlStdOperatorTable.HOUR,
-                builder.field("TIME")
-        );
-        builder.call(
-                SqlStdOperatorTable.TIMESTAMP_ADD,
-                hour,
-                builder.call(
-                        SqlStdOperatorTable.TIMESTAMP_DIFF,
-                        hour,
-                        builder.field("TIME")
-                )
-        );
-
-
-        builder.sort(builder.field(0)); // order by time
-        initRelToSqlConverter(database);
-        relToSql(builder);
     }
 
     public static RelBuilder builder() {
