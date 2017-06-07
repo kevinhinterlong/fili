@@ -139,7 +139,7 @@ public class SQLConverter {
         while (resultSet.next()) {
             ++rows;
             ResultSetMetaData rsmd = resultSet.getMetaData();
-            //read 3 columns and parse as time
+            //read 3 columns and evaluate as time
             //create a druidResponse
             DateTime resultTimeStamp = new DateTime(DateTimeZone.UTC);
             if (timeGranularity >= 1) {

@@ -4,6 +4,7 @@ import com.yahoo.bard.webservice.druid.model.postaggregation.ArithmeticPostAggre
 import com.yahoo.bard.webservice.druid.model.postaggregation.ConstantPostAggregation;
 import com.yahoo.bard.webservice.druid.model.postaggregation.FieldAccessorPostAggregation;
 import com.yahoo.bard.webservice.druid.model.postaggregation.PostAggregation;
+import com.yahoo.bard.webservice.druid.model.postaggregation.PostAggregation.DefaultPostAggregationType;
 
 import java.util.Map;
 
@@ -17,19 +18,28 @@ public class PostAggregationEvaluator {
 
     // todo post aggs have ordering
     public static Double evaluate(PostAggregation postAggregation, Map<String, String> aggregatedValues) {
-        if (postAggregation instanceof ConstantPostAggregation) {
-            ConstantPostAggregation constantPostAggregation = (ConstantPostAggregation) postAggregation;
-            return evaluate(constantPostAggregation);
-        } else if (postAggregation instanceof ArithmeticPostAggregation) {
-            ArithmeticPostAggregation arithmeticPostAggregation = (ArithmeticPostAggregation) postAggregation;
-            return evaluate(arithmeticPostAggregation, aggregatedValues);
-        } else if (postAggregation instanceof FieldAccessorPostAggregation) {
-            FieldAccessorPostAggregation fieldAccessorPostAggregation = (FieldAccessorPostAggregation) postAggregation;
-            return evaluate(fieldAccessorPostAggregation, aggregatedValues);
-        } else {
-            // javascript/sketch/theta sketch
-            throw new UnsupportedOperationException("Can't do post aggregation " + postAggregation.getType());
+        DefaultPostAggregationType aggregationType = (DefaultPostAggregationType) postAggregation
+                .getType();
+
+        switch (aggregationType) {
+            case ARITHMETIC:
+                ArithmeticPostAggregation arithmeticPostAggregation = (ArithmeticPostAggregation) postAggregation;
+                return evaluate(arithmeticPostAggregation, aggregatedValues);
+            case FIELD_ACCESS:
+                FieldAccessorPostAggregation fieldAccessorPostAggregation = (FieldAccessorPostAggregation)
+                        postAggregation;
+                return evaluate(fieldAccessorPostAggregation, aggregatedValues);
+            case CONSTANT:
+                ConstantPostAggregation constantPostAggregation = (ConstantPostAggregation) postAggregation;
+                return evaluate(constantPostAggregation);
+            case SKETCH_ESTIMATE:
+            case SKETCH_SET_OPER:
+            case THETA_SKETCH_ESTIMATE:
+            case THETA_SKETCH_SET_OP:
+            default:
+                throw new UnsupportedOperationException("Can't do post aggregation " + postAggregation.getType());
         }
+
     }
 
     private static Double evaluate(
