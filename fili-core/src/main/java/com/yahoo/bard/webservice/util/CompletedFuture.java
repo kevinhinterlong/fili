@@ -1,3 +1,5 @@
+// Copyright 2016 Yahoo Inc.
+// Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.util;
 
 import java.util.concurrent.ExecutionException;
@@ -7,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * A future response which has already been completed and will return
  * as soon as it is called.
+ *
+ * @param <E>  The type to be returned by this future
  */
 public class CompletedFuture<E> implements Future<E> {
     private final E item;
