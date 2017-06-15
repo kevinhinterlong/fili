@@ -9,23 +9,28 @@ import com.yahoo.bard.webservice.druid.model.aggregation.Aggregation;
 import com.yahoo.bard.webservice.druid.model.having.Having;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery;
+import com.yahoo.bard.webservice.druid.model.query.TopNQuery;
 import com.yahoo.bard.webservice.druid.response.DruidResponse;
 import com.yahoo.bard.webservice.druid.response.DruidResultRow;
 import com.yahoo.bard.webservice.druid.response.GroupByResultRow;
 import com.yahoo.bard.webservice.druid.response.TimeseriesResultRow;
+import com.yahoo.bard.webservice.druid.response.TopNResultRow;
 import com.yahoo.bard.webservice.util.CompletedFuture;
 import com.yahoo.bard.webservice.util.FailedFuture;
+import com.yahoo.bard.webservice.util.IntervalUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.calcite.adapter.jdbc.JdbcSchema;
 import org.apache.calcite.plan.RelTraitDef;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Programs;
@@ -40,6 +45,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -139,6 +145,7 @@ public class SqlConverter implements SqlBackedClient {
 
         JsonNode druidResponse = null;
         switch (queryType) {
+            case TOP_N:
             case GROUP_BY:
             case TIMESERIES:
                 druidResponse = executeAndProcessQuery(connection, druidQuery);
@@ -203,7 +210,7 @@ public class SqlConverter implements SqlBackedClient {
      */
     private JsonNode readSqlResultSet(DruidAggregationQuery<?> druidQuery, ResultSet resultSet) throws SQLException {
         Map<String, Function<String, Object>> resultTypeMapper = getAggregationTypeMapper(druidQuery);
-
+        //        System.out.println(DatabaseHelper.format(resultSet));
         int rows = 0;
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         DruidResponse druidResponse = new DruidResponse();
@@ -217,6 +224,8 @@ public class SqlConverter implements SqlBackedClient {
             DruidResultRow rowResult;
             if (druidQuery.getQueryType().equals(DefaultQueryType.GROUP_BY)) {
                 rowResult = new GroupByResultRow(timestamp, GroupByResultRow.Version.V1);
+            } else if (druidQuery.getQueryType().equals(DefaultQueryType.TOP_N)) {
+                rowResult = new TopNResultRow(timestamp);
             } else {
                 rowResult = new TimeseriesResultRow(timestamp);
             }
@@ -279,13 +288,24 @@ public class SqlConverter implements SqlBackedClient {
         List<RexNode> allFilters = getAllWhereFilters(druidQuery, nameOfTimestampColumn);
         builder.filter(allFilters);
 
-        LOG.debug("Adding aggregations { {} } and having filters", druidQuery.getAggregations());
+        LOG.debug("Adding aggregations and having filters");
         List<RexNode> groupColumns = addGroupByAggregationsAndHavingClauses(druidQuery, nameOfTimestampColumn);
 
         LOG.debug("Adding sorts to output");
         // todo check for sorting from druidQuery
         // this is somewhat bad, todo look into getting rexnode references and using them down here
-        builder.sort(builder.fields().subList(0, groupColumns.size()));
+        if (!druidQuery.getQueryType().equals(DefaultQueryType.TOP_N)) {
+            List<RexNode> sorts = new ArrayList<>();
+            sorts.addAll(builder.fields().subList(druidQuery.getDimensions().size(), groupColumns.size()));
+            sorts.addAll(builder.fields().subList(0, druidQuery.getDimensions().size()));
+            builder.sort(
+                    sorts
+            );
+        }
+
+        // todo build the relnode
+        // push it with a filter iterating over every bucket
+        // builder.union(true)
 
         // NOTE: does not include missing interval or meta information
         // this will have to be implemented later if at all since we don't know about partial data
@@ -303,13 +323,41 @@ public class SqlConverter implements SqlBackedClient {
      */
     private List<RexNode> getAllWhereFilters(DruidAggregationQuery<?> druidQuery, String nameOfTimestampColumn) {
         List<RexNode> filters = new ArrayList<>();
-        RexNode timeFilter = TimeConverter.buildTimeFilters(builder, druidQuery, nameOfTimestampColumn);
-        filters.add(timeFilter);
+        if (!druidQuery.getQueryType().equals(DefaultQueryType.TOP_N)) {
+            RexNode timeFilter = TimeConverter.buildTimeFilters(builder, druidQuery.getIntervals(), nameOfTimestampColumn);
+            filters.add(timeFilter);
+        }
 
         RexNode druidQueryFilter = FilterEvaluator.getFilterAsRexNode(builder, druidQuery.getFilter());
         if (druidQueryFilter != null) {
             filters.add(druidQueryFilter);
         }
+
+        // todo steps for topN query
+        RelNode topLevel = builder.build();
+        builder.clear();
+        List<RelNode> partiallyBuiltBucketedQueries = new ArrayList<>();
+
+        IntervalUtils.getSlicedIntervals(druidQuery.getIntervals(), druidQuery.getGranularity())
+                .keySet()
+                .stream()
+                .forEach(interval -> {
+                    builder.push(topLevel);
+                    filters.add(TimeConverter.buildTimeFilters(builder, Collections.singleton(interval), nameOfTimestampColumn));
+                    builder.filter(filters);
+                    partiallyBuiltBucketedQueries.add(builder.build());
+                    builder.clear();
+                });
+        List<RelNode> builtBucketedQueries = new ArrayList<>();
+        for (RelNode bucket : partiallyBuiltBucketedQueries) {
+            builder.push(bucket);
+            finishBuilding(builder);
+            builtBucketedQueries.add(builder.build());
+            builder.clear();
+        }
+        builder.pushAll(builtBucketedQueries);
+        builder.union(true, builtBucketedQueries.size());
+        //return relToSql(builder);
 
         return filters;
     }
@@ -364,17 +412,17 @@ public class SqlConverter implements SqlBackedClient {
                 .map(aggregation -> SqlAggregationType.getAggregation(aggregation, builder, ALIAS_MAKER))
                 .collect(Collectors.toList());
 
-        Stream<RexNode> timeFilters = TimeConverter.buildGroupBy(
+        List<RexNode> timeFilters = TimeConverter.buildGroupBy(
                 builder,
                 druidQuery.getGranularity(),
                 nameOfTimestampColumn
-        ).stream();
+        );
 
         Stream<RexNode> dimensionFilters = druidQuery.getDimensions().stream()
                 .map(Dimension::getApiName)
                 .map(builder::field);
 
-        List<RexNode> allGroupBys = Stream.concat(dimensionFilters, timeFilters).collect(Collectors.toList());
+        List<RexNode> allGroupBys = Stream.concat(dimensionFilters, timeFilters.stream()).collect(Collectors.toList());
 
         builder.aggregate(
                 builder.groupKey(
@@ -388,6 +436,35 @@ public class SqlConverter implements SqlBackedClient {
             if (having != null) {
                 builder.filter(HavingEvaluator.evaluate(builder, having, ALIAS_MAKER));
             }
+        } else if (druidQuery.getQueryType().equals(DefaultQueryType.TOP_N)) {
+            //todo use https://stackoverflow.com/q/12113699 for inspiration to effectively union all the buckets
+            /*
+            More reading for how to do this
+            https://www.xaprb.com/blog/2006/12/07/how-to-select-the-firstleastmax-row-per-group-in-sql/
+            https://www.percona.com/blog/2006/08/10/using-union-to-implement-loose-index-scan-to-mysql/
+            The union all method looks ridiculous but apparently performs okay
+             */
+            //            RelNode node = builder.build();
+            //            builder.clear();
+            //            int n = 1;
+            //            for (int i = 0; i < n; i++) {
+            //                builder.push(node);
+            //                builder.filter(builder.call(
+            //                        SqlStdOperatorTable.EQUALS,
+            //                        builder.fields().get(allGroupBys.size() - 1),
+            //                        builder.literal(i)
+            //                ));
+            //
+                            TopNQuery topNQuery = (TopNQuery) druidQuery;
+                            int threshold = (int) topNQuery.getThreshold();
+                            List<RexNode> sorts = new ArrayList<>(builder.fields()
+                                    .subList(druidQuery.getDimensions().size(), allGroupBys.size()));
+                            sorts.add(builder.desc(builder.field(ALIAS_MAKER.apply(topNQuery.getMetric().getMetric
+             ().toString()))));
+                            builder.sortLimit(0, threshold, sorts);
+            //            }
+            //
+            //            builder.union(true, n);
         }
 
         return allGroupBys;

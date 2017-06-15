@@ -45,6 +45,7 @@ import com.yahoo.bard.webservice.druid.model.having.Having
 import com.yahoo.bard.webservice.druid.model.query.DruidQuery
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery
+import com.yahoo.bard.webservice.druid.model.query.TopNQuery
 import com.yahoo.bard.webservice.helper.SimpleDruidQueryBuilder
 import com.yahoo.bard.webservice.table.Column
 import com.yahoo.bard.webservice.test.Database
@@ -134,6 +135,28 @@ class SqlConverterSpec extends Specification {
         );
     }
 
+    private static TopNQuery getTopNQuery(
+            DefaultTimeGrain timeGrain,
+            Filter filter,
+            String orderMetric,
+            String dimension,
+            int threshold
+    ) {
+        return SimpleDruidQueryBuilder.topNQuery(
+                WIKITICKER,
+                filter,
+                threshold,
+                orderMetric,
+                getDimension(dimension),
+                timeGrain,
+                asList(ADDED),
+                asList(COMMENT),
+                asList(sum(ADDED)),
+                asList(),
+                asList(interval(START, END))
+        );
+    }
+
     @Unroll
     def "ExecuteQuery for #timeGrain want #size filter on #filter"() {
         expect:
@@ -218,6 +241,23 @@ class SqlConverterSpec extends Specification {
         HOUR      | asList()                 | null                           | gt(ADDED, 400000)               | 12
         HOUR      | asList()                 | null                           | null                            | 24
         DAY       | asList(PAGE, USER)       | null                           | null                            | 36565
+        DAY       | asList(PAGE)             | null                           | null                            | 1
+    }
 
+    @Unroll
+    def "Test handling of topN queries"() {
+        //todo this is working for the first bucket
+        setup:
+        DruidQuery druidQuery = getTopNQuery(timeGrain, filter, metric, dimension, threshold)
+        JsonNode jsonNode = sqlBackedClient.executeQuery(druidQuery).get();
+
+        expect:
+        ResultSet parse = parse(timeGrain, jsonNode, DefaultQueryType.GROUP_BY)
+        parse.size() == size
+
+        where: "we have"
+        timeGrain | filter | metric | dimension | threshold | size
+        DAY       | null   | ADDED  | PAGE      | 10        | 10
+        HOUR      | null   | ADDED  | USER      | 10        | 24 * 10
     }
 }
