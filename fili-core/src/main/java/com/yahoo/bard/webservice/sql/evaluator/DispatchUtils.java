@@ -32,10 +32,16 @@ public class DispatchUtils {
             Method toInvoke = caller.getDeclaredMethod(methodName, parameterClasses);
             toInvoke.setAccessible(true);
             return (E) toInvoke.invoke(null, parameters);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+        } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new UnsupportedOperationException(
                     "Can't " + caller.getSimpleName() + "." + methodName + Arrays.toString(parameters),
                     e
+            );
+        } catch (InvocationTargetException e) {
+            throw new UnsupportedOperationException(
+                    "Can't " + caller.getSimpleName() + "." + methodName + Arrays.toString(parameters) + " because " +
+                            e.getTargetException().getCause(),
+                    e.getTargetException()
             );
         }
     }
