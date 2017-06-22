@@ -227,6 +227,19 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
         </dependency>
+
+        <!-- Calcite and H2 for sql support -->
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-core</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+         <!-- Todo eventually only use this in the testing part -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.195</version>
+        </dependency>
     </dependencies>
 
     <build>
