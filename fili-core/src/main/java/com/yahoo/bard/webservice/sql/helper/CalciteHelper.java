@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.sql.helper;
 
+import org.apache.calcite.adapter.clone.CloneSchema;
 import org.apache.calcite.adapter.jdbc.JdbcSchema;
 import org.apache.calcite.plan.RelTraitDef;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
@@ -25,16 +26,12 @@ import javax.sql.DataSource;
 public class CalciteHelper {
     public static final String DEFAULT_SCHEMA = "PUBLIC";
     private final DataSource dataSource;
-    private final String username;
-    private final String password;
     private final String schemaName;
     private final SqlDialect dialect;
 
-    public CalciteHelper(DataSource dataSource, String username, String password, String schemaName)
+    public CalciteHelper(DataSource dataSource, String schemaName)
             throws SQLException {
         this.dataSource = dataSource;
-        this.username = username;
-        this.password = password;
         this.schemaName = schemaName;
         dialect = SqlDialect.create(getConnection().getMetaData());
     }
@@ -48,11 +45,7 @@ public class CalciteHelper {
     }
 
     public Connection getConnection() throws SQLException {
-        if (username == null || password == null) {
-            return dataSource.getConnection();
-        } else {
-            return dataSource.getConnection(username, password);
-        }
+        return dataSource.getConnection();
     }
 
     public RelToSqlConverter getNewRelToSqlConverter() throws SQLException {
@@ -105,10 +98,13 @@ public class CalciteHelper {
      * @return the schema.
      */
     private static SchemaPlus addSchema(SchemaPlus rootSchema, DataSource dataSource, String schemaName) {
-        // todo look into cloning schema
+        // todo what do these actually do?
+        rootSchema.setCacheEnabled(true);
         return rootSchema.add(
                 schemaName,
-                JdbcSchema.create(rootSchema, null, dataSource, null, null)
+                new CloneSchema(
+                        rootSchema.add(schemaName, JdbcSchema.create(rootSchema, null, dataSource, null, null))
+                )
         );
     }
 
@@ -116,7 +112,7 @@ public class CalciteHelper {
         return new SqlPrettyWriter(dialect);
     }
 
-    public String escape(String sqlTableName) {
-        return dialect.quoteIdentifier(sqlTableName);
+    public String escapeTableName(String sqlTableName) {
+        return dialect.quoteIdentifier(schemaName) + "." + dialect.quoteIdentifier(sqlTableName);
     }
 }

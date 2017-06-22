@@ -152,7 +152,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * @return a RexNode containing an equivalent filter to the one given.
      */
     private static RexNode evaluate(RelBuilder builder, SearchFilter searchFilter, List<String> dimensions) {
-        // todo put these in SearchFilter?
+        // todo put rebase when pr396 gets merged
         String typeKey = "type";
         String valueKey = "value";
 

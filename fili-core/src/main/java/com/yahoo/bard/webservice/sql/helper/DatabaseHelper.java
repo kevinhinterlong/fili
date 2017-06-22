@@ -29,9 +29,10 @@ public class DatabaseHelper {
      *
      * @throws SQLException if failed while reading database.
      */
-    public static String getTimestampColumn(Connection connection, String tableName) throws SQLException {
-        // todo probably use prepared statement. Pass in schema as well
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM " + tableName + " LIMIT 1");
+    public static String getTimestampColumn(Connection connection, String tableWithSchema)
+            throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM " + tableWithSchema + " " +
+                "LIMIT 1");
         ResultSet resultSet = preparedStatement.executeQuery();
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         // todo as of now I've only tested this with timestamp
