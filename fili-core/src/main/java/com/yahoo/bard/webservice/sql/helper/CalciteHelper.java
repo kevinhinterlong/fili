@@ -8,6 +8,7 @@ import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
@@ -27,12 +28,15 @@ public class CalciteHelper {
     private final String username;
     private final String password;
     private final String schemaName;
+    private final SqlDialect dialect;
 
-    public CalciteHelper(DataSource dataSource, String username, String password, String schemaName) {
+    public CalciteHelper(DataSource dataSource, String username, String password, String schemaName)
+            throws SQLException {
         this.dataSource = dataSource;
         this.username = username;
         this.password = password;
         this.schemaName = schemaName;
+        dialect = SqlDialect.create(getConnection().getMetaData());
     }
 
     public RelBuilder getNewRelBuilder() {
@@ -52,7 +56,7 @@ public class CalciteHelper {
     }
 
     public RelToSqlConverter getNewRelToSqlConverter() throws SQLException {
-        return new RelToSqlConverter(SqlDialect.create(getConnection().getMetaData()));
+        return new RelToSqlConverter(dialect);
     }
 
     /**
@@ -106,5 +110,13 @@ public class CalciteHelper {
                 schemaName,
                 JdbcSchema.create(rootSchema, null, dataSource, null, null)
         );
+    }
+
+    public SqlPrettyWriter getNewSqlWriter() {
+        return new SqlPrettyWriter(dialect);
+    }
+
+    public String escape(String sqlTableName) {
+        return dialect.quoteIdentifier(sqlTableName);
     }
 }
