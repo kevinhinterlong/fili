@@ -98,14 +98,19 @@ public class CalciteHelper {
      * @return the schema.
      */
     private static SchemaPlus addSchema(SchemaPlus rootSchema, DataSource dataSource, String schemaName) {
-        // todo what do these actually do?
-        rootSchema.setCacheEnabled(true);
-        return rootSchema.add(
+        return rootSchema.add( // avg tests run at ~75-100ms
                 schemaName,
-                new CloneSchema(
-                        rootSchema.add(schemaName, JdbcSchema.create(rootSchema, null, dataSource, null, null))
-                )
+                JdbcSchema.create(rootSchema, null, dataSource, null, null)
         );
+        // todo what do these actually do?
+        // todo look into timing (not using cloneschema was faster, but this could just be because of H2)
+//        rootSchema.setCacheEnabled(true); //almost no effect
+//        return rootSchema.add( // avg tests run at ~200ms
+//                schemaName,
+//                new CloneSchema(
+//                        rootSchema.add(schemaName, JdbcSchema.create(rootSchema, null, dataSource, null, null))
+//                )
+//        );
     }
 
     public SqlPrettyWriter getNewSqlWriter() {

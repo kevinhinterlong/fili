@@ -47,7 +47,11 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * @return a list of all the dimension names.
      */
     public static List<String> getDimensionNames(RelBuilder builder, Filter filter) {
-        return evaluate(builder, filter).getRight();
+        //todo use DataApiRequest instead and simplify this class
+        return evaluate(builder, filter).getRight()
+                .stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**

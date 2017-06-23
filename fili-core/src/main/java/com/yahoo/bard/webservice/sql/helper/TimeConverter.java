@@ -114,6 +114,7 @@ public class TimeConverter {
     }
 
     private static DefaultTimeGrain getDefaultTimeGrain(Granularity granularity) {
+        // todo what about ALL granularity?/others
         TimeGrain timeGrain = (TimeGrain) granularity;
         DefaultTimeGrain defaultTimeGrain = DefaultTimeGrain.valueOf(timeGrain.getName().toUpperCase());
         return defaultTimeGrain;
