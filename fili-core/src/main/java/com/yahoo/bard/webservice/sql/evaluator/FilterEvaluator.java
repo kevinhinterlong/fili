@@ -70,7 +70,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * Evaluates and builds a filter and finds all the dimension names used in all filters.
      * NOTE: this is doing two things at once, but the interface given only lets you do one at a time.
      * This is because dimension names needed to build the RexNode aren't known beforehand.
-     * This forces the flow to be [getDimensionNames] -> [buider.project] -> [builer.getFilterAsRexNode]
+     * This forces the flow to be [getDimensionNames] -> [buider.project] -> [getFilterAsRexNode] -> [builder.filter]
      *
      * @param builder  The RelBuilder used with Calcite to make queries.
      * @param filter  The filter to be evaluated.
