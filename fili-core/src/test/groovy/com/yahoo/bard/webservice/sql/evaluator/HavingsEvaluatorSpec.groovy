@@ -8,6 +8,7 @@ import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
 import static com.yahoo.bard.webservice.sql.helper.Aggregator.max
 import static com.yahoo.bard.webservice.sql.helper.Aggregator.min
 import static com.yahoo.bard.webservice.sql.helper.Aggregator.sum
+import static com.yahoo.bard.webservice.sql.helper.Havings.and
 import static com.yahoo.bard.webservice.sql.helper.Havings.equals
 import static com.yahoo.bard.webservice.sql.helper.Havings.gt
 import static com.yahoo.bard.webservice.sql.helper.Havings.lt
@@ -67,12 +68,12 @@ class HavingsEvaluatorSpec extends Specification {
         sql.contains(expectedHavingSql)
         // todo use and
         where: "we have"
-        having                                   | aggregations                     | expectedHavingSql
-        gt(ADDED, ONE)                           | asList(sum(ADDED))               | "HAVING SUM(`${ADDED}`) > 1"
-        lt(DELETED, ONE)                         | asList(sum(DELETED))             | "HAVING SUM(`${DELETED}`) < 1"
-        equals(DELETED, ONE)                     | asList(sum(DELETED), sum(ADDED)) | "HAVING SUM(`${DELETED}`) = 1"
-        or(equals(DELETED, ONE), lt(ADDED, TWO)) | asList(max(DELETED), min(ADDED)) | "HAVING MAX(`${DELETED}`) = 1 OR " +
-                "MIN(`${ADDED}`) < 2"
+        having                                    | aggregations                     | expectedHavingSql
+        gt(ADDED, ONE)                            | asList(sum(ADDED))               | "HAVING SUM(`${ADDED}`) > 1"
+        lt(DELETED, ONE)                          | asList(sum(DELETED))             | "HAVING SUM(`${DELETED}`) < 1"
+        equals(DELETED, ONE)                      | asList(sum(DELETED), sum(ADDED)) | "HAVING SUM(`${DELETED}`) = 1"
+        or(equals(DELETED, ONE), lt(ADDED, TWO))  | asList(max(DELETED), min(ADDED)) | "HAVING MAX(`${DELETED}`) = 1 OR MIN(`${ADDED}`) < 2"
+        and(equals(DELETED, ONE), lt(ADDED, TWO)) | asList(max(DELETED), min(ADDED)) | "HAVING MAX(`${DELETED}`) = 1 AND MIN(`${ADDED}`) < 2"
 
     }
 
@@ -98,6 +99,5 @@ class HavingsEvaluatorSpec extends Specification {
         where: "queries have 2 or more aggregations on one metric - can't tell which should be used in having filter"
         having                                 | aggregations                       | expectedHavingSql
         or(lt(DELETED, ONE), gt(DELETED, TWO)) | asList(max(DELETED), min(DELETED)) | "HAVING MAX(`${DELETED}`) < 1 OR MAX(`${DELETED}`) > 2"
-        // todo this should actually fail while evaluating
     }
 }

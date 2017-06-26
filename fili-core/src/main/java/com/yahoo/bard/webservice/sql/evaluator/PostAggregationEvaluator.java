@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 /**
  * Evaluates post aggregations.
+ * For more info see: io.druid.query.aggregation.post.ArithmeticPostAggregator.
  */
 public class PostAggregationEvaluator {
 
@@ -22,16 +23,32 @@ public class PostAggregationEvaluator {
     }
 
     /**
-     * Top level evaluation of a postAggregation.
-     * NOTE: does not support any sketch operations.
-     * TODO: always returns a double. this may not be correct
+     * Calculates the value of a post aggregation.
      *
      * @param postAggregation  The post aggregation to evaluate.
      * @param aggregatedValues  A map from fieldNames of aggregated values to their actual value.
      *
      * @return the number calculated from the postAggregation.
      */
-    public static Double evaluate(PostAggregation postAggregation, Function<String, String> aggregatedValues) {
+    public static Number calculate(PostAggregation postAggregation, Function<String, String> aggregatedValues) {
+        Double doubleValue = evaluate(postAggregation, aggregatedValues);
+        if (postAggregation.isFloatingPoint()) {
+            return doubleValue;
+        } else {
+            return doubleValue.longValue();
+        }
+    }
+
+    /**
+     * Top level evaluation of a postAggregation which evaluates all inner {@link PostAggregation}
+     * and returns the value.
+     *
+     * @param postAggregation  The post aggregation to evaluate.
+     * @param aggregatedValues  A map from fieldNames of aggregated values to their actual value.
+     *
+     * @return the number calculated from the postAggregation.
+     */
+    private static Double evaluate(PostAggregation postAggregation, Function<String, String> aggregatedValues) {
         if (postAggregation == null) {
             return null;
         }
@@ -87,24 +104,21 @@ public class PostAggregationEvaluator {
                 }
                 return prod;
             case MINUS:
-                if (arithmeticPostAggregation.getFields().size() != 2) { // todo check if this is true
-                    throw new IllegalArgumentException("Can only subtract on two fields");
+                Double sub = evaluate(arithmeticPostAggregation.getFields().get(0), aggregatedValues);
+                for (int i = 1; i < arithmeticPostAggregation.getFields().size(); i++) {
+                    PostAggregation postAgg = arithmeticPostAggregation.getFields().get(i);
+                    sub -= evaluate(postAgg, aggregatedValues);
                 }
-                Double firstAsDoubleSub = evaluate(arithmeticPostAggregation.getFields().get(0), aggregatedValues);
-                Double secondAsDoubleSub = evaluate(arithmeticPostAggregation.getFields().get(1), aggregatedValues);
-                return firstAsDoubleSub - secondAsDoubleSub;
+                return sub;
             case DIVIDE:
                 if (arithmeticPostAggregation.getFields().size() != 2) {
                     throw new IllegalArgumentException("Can only divide on two fields");
                 }
-                Double firstAsDoubleDiv = evaluate(arithmeticPostAggregation.getFields().get(0), aggregatedValues);
-                Double secondAsDoubleDiv = evaluate(arithmeticPostAggregation.getFields().get(1), aggregatedValues);
-                if (secondAsDoubleDiv == 0) {
-                    // if divisor is zero then result is zero
-                    // as per druid's http://druid.io/docs/latest/querying/post-aggregations.html
-                    return 0D;
-                }
-                return firstAsDoubleDiv / secondAsDoubleDiv;
+                Double divLhs = evaluate(arithmeticPostAggregation.getFields().get(0), aggregatedValues);
+                Double divRhs = evaluate(arithmeticPostAggregation.getFields().get(1), aggregatedValues);
+                // if divisor is zero then result is zero
+                // from druid docs http://druid.io/docs/latest/querying/post-aggregations.html
+                return divRhs == 0.0 ? 0 : divLhs / divRhs;
         }
         throw new UnsupportedOperationException("Can't do post aggregation " + arithmeticPostAggregation);
     }
@@ -113,6 +127,7 @@ public class PostAggregationEvaluator {
      * Evaluates a constantPostAggregation by reading it's value.
      *
      * @param constantPostAggregation  Contains a constant which will be read.
+     * @param aggregatedValues  A map from fieldNames of aggregated values to their actual value.
      *
      * @return the constant value for this postAggregation.
      */

@@ -30,7 +30,7 @@ class PostAggregationEvaluatorSpec extends Specification {
     }
 
     @Unroll
-    def "Evaluate Post Aggregations "() {
+    def "Evaluate Post Aggregations expecting #value"() {
         expect:
         Double result = PostAggregationEvaluator.evaluate(postAgg, { it -> fieldToValue.get(it) })
         result == value
@@ -42,6 +42,7 @@ class PostAggregationEvaluatorSpec extends Specification {
         arithmetic(PLUS, arithmetic(PLUS, constant(1)), constant(1)) | 2
         arithmetic(PLUS, field(sum(ONE)), field(sum(FIVE)))          | 6
         arithmetic(MINUS, field(sum(ONE)), field(sum(FIVE)))         | -4
+        arithmetic(MINUS, constant(1), constant(1), constant(1))     | -1
         arithmetic(MULTIPLY, field(sum(ONE)), field(sum(FIVE)))      | 5
         arithmetic(DIVIDE, field(sum(ONE)), field(sum(FIVE)))        | 1 / 5
         arithmetic(DIVIDE, field(sum(ONE)), constant(0))             | 0
@@ -58,7 +59,6 @@ class PostAggregationEvaluatorSpec extends Specification {
         where:
         postAgg                                                    | thrownException
         arithmetic(DIVIDE, constant(1), constant(1), constant(1))  | IllegalArgumentException
-        arithmetic(MINUS, constant(1), constant(1), constant(1))   | IllegalArgumentException
         new ThetaSketchEstimatePostAggregation("", null)           | UnsupportedOperationException
         new ThetaSketchSetOperationPostAggregation("", null, null) | UnsupportedOperationException
         new SketchSetOperationPostAggregation("", null, null)      | UnsupportedOperationException

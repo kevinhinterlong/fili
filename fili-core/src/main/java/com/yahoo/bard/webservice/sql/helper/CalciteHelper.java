@@ -98,7 +98,7 @@ public class CalciteHelper {
      * @return the schema.
      */
     private static SchemaPlus addSchema(SchemaPlus rootSchema, DataSource dataSource, String schemaName) {
-        return rootSchema.add( // avg tests run at ~75-100ms
+        return rootSchema.add(// avg tests run at ~75-100ms
                 schemaName,
                 JdbcSchema.create(rootSchema, null, dataSource, null, null)
         );

@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Evaluates filters to find all the dimensions used in them and
  * to build a {@link RexNode} with an equivalent sql filter.
  */
-public class FilterEvaluator implements ReflectiveVisitor {
+public class FilterEvaluator {
     /**
      * Private constructor - all methods static.
      */
@@ -47,7 +47,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * @return a list of all the dimension names.
      */
     public static List<String> getDimensionNames(RelBuilder builder, Filter filter) {
-        //todo use DataApiRequest instead and simplify this class
+        // todo could use DataApiRequest instead and simplify this class
         return evaluate(builder, filter).getRight()
                 .stream()
                 .distinct()
@@ -117,7 +117,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * @return a RexNode containing an equivalent filter to the one given.
      */
     private static RexNode evaluate(RelBuilder builder, RegularExpressionFilter regexFilter, List<String> dimensions) {
-        //todo test this
+        // todo test this
         String apiName = regexFilter.getDimension().getApiName();
         dimensions.add(apiName);
         return builder.call(
@@ -156,7 +156,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
      * @return a RexNode containing an equivalent filter to the one given.
      */
     private static RexNode evaluate(RelBuilder builder, SearchFilter searchFilter, List<String> dimensions) {
-        // todo put rebase when pr396 gets merged
+        // todo rebase and cleanup when pr396 gets merged
         String typeKey = "type";
         String valueKey = "value";
 
@@ -175,7 +175,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
                         builder.literal("%" + valueToFind + "%")
                 );
             case InsensitiveContains:
-                // todo maybe look at SqlCollation, does this make the text to check against lower as well?
+                // todo maybe look at SqlCollation
                 return builder.call(
                         SqlStdOperatorTable.LIKE,
                         builder.call(
@@ -188,7 +188,7 @@ public class FilterEvaluator implements ReflectiveVisitor {
                 // todo: fragment takes json array of strings and checks if any are contained? just OR search over them?
                 // http://druid.io/docs/0.9.1.1/querying/filters.html
             default:
-                throw new UnsupportedOperationException("Not implemented");
+                throw new UnsupportedOperationException(queryType + " not implemented.");
         }
     }
 
@@ -214,14 +214,41 @@ public class FilterEvaluator implements ReflectiveVisitor {
         return evaluate(builder, orFilterOfSelectors, dimensions);
     }
 
+    /**
+     * Evaluates an {@link OrFilter}.
+     *
+     * @param builder  The RelBuilder used with Calcite to make queries.
+     * @param orFilter  An orFilter to be evaluated.
+     * @param dimensions  The list of dimensions already found.
+     *
+     * @return a RexNode containing an equivalent filter which ORs over the inner filters.
+     */
     private static RexNode evaluate(RelBuilder builder, OrFilter orFilter, List<String> dimensions) {
         return listEvaluate(builder, orFilter, dimensions, SqlStdOperatorTable.OR);
     }
 
+    /**
+     * Evaluates an {@link AndFilter}.
+     *
+     * @param builder  The RelBuilder used with Calcite to make queries.
+     * @param andFilter  An andFilter to be evaluated.
+     * @param dimensions  The list of dimensions already found.
+     *
+     * @return a RexNode containing an equivalent filter which ANDs over the inner filters.
+     */
     private static RexNode evaluate(RelBuilder builder, AndFilter andFilter, List<String> dimensions) {
         return listEvaluate(builder, andFilter, dimensions, SqlStdOperatorTable.AND);
     }
 
+    /**
+     * Evaluates an {@link NotFilter}.
+     *
+     * @param builder  The RelBuilder used with Calcite to make queries.
+     * @param notFilter  An notFilter to be evaluated.
+     * @param dimensions  The list of dimensions already found.
+     *
+     * @return a RexNode containing an equivalent filter which NOTs over the inner filters.
+     */
     private static RexNode evaluate(RelBuilder builder, NotFilter notFilter, List<String> dimensions) {
         return listEvaluate(builder, notFilter, dimensions, SqlStdOperatorTable.NOT);
     }

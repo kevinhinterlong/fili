@@ -78,13 +78,12 @@ public enum SqlAggregationType {
         }
 
         if (aggFunction != null) {
-            String fieldName = aggregation.getFieldName();
             return builder.aggregateCall(
                     aggFunction,
                     false,
                     null,
-                    aliasMaker.apply(fieldName),
-                    builder.field(fieldName)
+                    aggregation.getName(),
+                    builder.field(aggregation.getFieldName())
             );
         } else {
             throw new UnsupportedOperationException("No corresponding AggCall for " + type);

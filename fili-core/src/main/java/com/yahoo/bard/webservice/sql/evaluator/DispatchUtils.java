@@ -18,9 +18,11 @@ public class DispatchUtils {
     }
 
     /**
-     * Calls the current (overloaded) method in the callers class with
+     * Calls the given method in the caller's class with
      * the given parameter types and provided parameters.
      *
+     * @param caller  The class the method is located in.
+     * @param methodName  The name of the method to call.
      * @param parameterClasses  The classes of the parameters for the method being invoked.
      * @param parameters  The objects to be passed in as the parameters to the method.
      * @param <E>  The return type of the method.
@@ -40,7 +42,7 @@ public class DispatchUtils {
         } catch (InvocationTargetException e) {
             throw new UnsupportedOperationException(
                     "Can't " + caller.getSimpleName() + "." + methodName + Arrays.toString(parameters) + " because " +
-                            e.getTargetException().getCause(),
+                            e.getTargetException().getMessage(),
                     e.getTargetException()
             );
         }
