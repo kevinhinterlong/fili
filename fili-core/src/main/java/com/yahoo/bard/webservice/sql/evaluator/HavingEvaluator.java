@@ -103,7 +103,7 @@ public class HavingEvaluator {
         }
         return builder.call(
                 operator,
-                builder.field(aliasMaker.unApply(having.getAggregation())),
+                builder.field(aliasMaker.apply(having.getAggregation())),
                 builder.literal(having.getValue())
         );
     }

@@ -19,6 +19,7 @@ import com.yahoo.bard.webservice.data.time.DefaultTimeGrain
 import com.yahoo.bard.webservice.sql.AliasMaker
 import com.yahoo.bard.webservice.sql.database.Database
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper
+import com.yahoo.bard.webservice.sql.helper.SimpleDruidQueryBuilder
 import com.yahoo.bard.webservice.sql.helper.SqlAggregationType
 import com.yahoo.bard.webservice.sql.helper.TimeConverter
 
@@ -37,7 +38,7 @@ class HavingsEvaluatorSpec extends Specification {
     private static final int ONE = 1
     private static final int TWO = 2
     private static final Connection CONNECTION = Database.initializeDatabase()
-    private static final AliasMaker ALIAS_MAKER = new AliasMaker("__");
+    private static final AliasMaker ALIAS_MAKER = new AliasMaker(SimpleDruidQueryBuilder.getDictionary().get(WIKITICKER).schema);
 
     private static RelBuilder getBuilder() {
         RelBuilder builder = CalciteHelper.getBuilder(Database.getDataSource())
@@ -46,7 +47,7 @@ class HavingsEvaluatorSpec extends Specification {
     }
 
     @Unroll
-    def "GetDimensionNames"() {
+    def "GetDimensionNames on #expectedHavingSql"() {
         setup:
         RelBuilder builder = getBuilder()
         RelBuilder.AggCall[] aggregationCalls = aggregations.stream().map {
@@ -66,7 +67,6 @@ class HavingsEvaluatorSpec extends Specification {
                 asSelect().
                 toString();
         sql.contains(expectedHavingSql)
-        // todo use and
         where: "we have"
         having                                    | aggregations                     | expectedHavingSql
         gt(ADDED, ONE)                            | asList(sum(ADDED))               | "HAVING SUM(`${ADDED}`) > 1"
@@ -77,7 +77,8 @@ class HavingsEvaluatorSpec extends Specification {
 
     }
 
-    def "Test bad inputs for having filters"() {
+    @Unroll
+    def "Test bad inputs for having filters on #expectedHavingSql"() {
         setup:
         RelBuilder builder = getBuilder()
         RelBuilder.AggCall[] aggregationCalls = aggregations.collect { SqlAggregationType.getAggregation(it, builder, ALIAS_MAKER) } as RelBuilder.AggCall[]
