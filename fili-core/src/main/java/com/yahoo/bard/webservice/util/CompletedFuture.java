@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A future response which has already been completed and will return
  * as soon as it is called.
+ * TODO rebase/delete me
  *
  * @param <E>  The type to be returned by this future
  */
