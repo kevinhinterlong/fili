@@ -121,6 +121,18 @@ public class RateLimiter {
         return count;
     }
 
+    public int getRemaining(String userName) {
+        AtomicInteger count = userCounts.get(userName);
+
+        // Create a counter if we don't have one yet
+        if (count == null) {
+            userCounts.putIfAbsent(userName, new AtomicInteger());
+            count = userCounts.get(userName);
+        }
+        int num = count.get();
+        return requestLimitPerUser - num;
+    }
+
     /**
      * Increment user outstanding requests count.
      *

@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.Priority;
 import javax.inject.Singleton;
@@ -40,7 +42,7 @@ public class RateLimitFilter implements ContainerRequestFilter, ContainerRespons
 
     private static final String PROPERTY_TOKEN = RateLimiter.class.getName() + ".token";
     private static final Logger LOG = LoggerFactory.getLogger(RateLimitFilter.class);
-
+    private static final Map<ContainerRequestContext, Integer> REQUEST_COUNTER = new HashMap<>();
     protected final RateLimiter rateLimiter;
 
     /**
@@ -88,6 +90,9 @@ public class RateLimitFilter implements ContainerRequestFilter, ContainerRespons
             Principal user = securityContext == null ? null : securityContext.getUserPrincipal();
             RequestToken token = rateLimiter.getToken(type, user);
 
+            String username = String.valueOf(user == null ? null : user.getName());
+            REQUEST_COUNTER.put(request, rateLimiter.getRemaining(username));
+
             // Add the token to the request if it was bound
             if (token.isBound()) {
                 request.setProperty(PROPERTY_TOKEN, token);
@@ -105,6 +110,9 @@ public class RateLimitFilter implements ContainerRequestFilter, ContainerRespons
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
+        response.getHeaders().add("X-RateLimit-Remaining", REQUEST_COUNTER.get(request) + 1);
+        REQUEST_COUNTER.remove(request);
+
         // Release the token
         RequestToken token = (RequestToken) request.getProperty(PROPERTY_TOKEN);
         if (token != null) {
