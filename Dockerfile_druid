@@ -1,0 +1,48 @@
+FROM openjdk:alpine
+
+RUN mkdir -p /opt/druid
+WORKDIR /opt/druid
+
+RUN apk update && apk add maven curl bash
+
+ENV DRUID_VERSION=0.10.0
+ENV ZOOKEEPER_VERSION=3.4.6
+
+#download druid
+RUN curl -O http://static.druid.io/artifacts/releases/druid-${DRUID_VERSION}-bin.tar.gz && \
+    tar -xzf druid-${DRUID_VERSION}-bin.tar.gz
+
+RUN rm druid-${DRUID_VERSION}-bin.tar.gz
+
+
+WORKDIR /opt/druid/druid-${DRUID_VERSION}/
+#download zookeeper
+RUN curl http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz -o zookeeper-${ZOOKEEPER_VERSION}.tar.gz && \
+    tar -xzf zookeeper-${ZOOKEEPER_VERSION}.tar.gz
+
+RUN rm zookeeper-${ZOOKEEPER_VERSION}.tar.gz && \
+    cp zookeeper-${ZOOKEEPER_VERSION}/conf/zoo_sample.cfg zookeeper-${ZOOKEEPER_VERSION}/conf/zoo.cfg
+
+RUN ./bin/init
+
+
+# Expose ports:
+# - 8081: HTTP (coordinator)
+# - 8082: HTTP (broker)
+# - 8083: HTTP (historical)
+# - 8090: HTTP (overlord)
+# - 2181 2888 3888: ZooKeeper
+EXPOSE 8081
+EXPOSE 8082
+EXPOSE 8083
+EXPOSE 8090
+EXPOSE 2181 2888 3888
+
+
+WORKDIR /opt/druid/druid-${DRUID_VERSION}/
+COPY druid_start.sh /opt/druid/druid-${DRUID_VERSION}/
+RUN chmod +x druid_start.sh
+RUN echo "THIS REQUIRES ABOTU 4GB OF RAM. OTHERWISE IT WILL FAIL"
+CMD ./druid_start.sh && tail -f /dev/null
+# todo find a better way to keep it running https://stackoverflow.com/a/30209974
+
