@@ -4,6 +4,23 @@ Fili Wikipedia Example Application
 This example is an entirely self contained example that provides a Fili application for the 
 [Druid Wikipedia example](http://druid.io/docs/latest/tutorials/quickstart.html).
 
+## *NEW:* Super Quick Start
+
+1. [Install Docker](https://www.docker.com/community-edition). Start the Docker Engine.
+
+2. After it starts, go to `Preferences --> Advanced` and allocate 6GB of memory.
+
+3. Clone this repository to your computer.
+    ```bash
+    git clone git@github.com:yahoo/fili.git
+    ```
+    
+4. Run the below commands.
+    ```bash
+    cd fili
+    docker-compose up
+    ```
+
 ## Setup and Launching
 
 1. Follow the [Druid instructions](http://druid.io/docs/latest/tutorials/quickstart.html) to bring up a local Druid 

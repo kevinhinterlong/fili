@@ -42,7 +42,5 @@ EXPOSE 2181 2888 3888
 WORKDIR /opt/druid/druid-${DRUID_VERSION}/
 COPY druid_start.sh /opt/druid/druid-${DRUID_VERSION}/
 RUN chmod +x druid_start.sh
-RUN echo "THIS REQUIRES ABOTU 4GB OF RAM. OTHERWISE IT WILL FAIL"
 CMD ./druid_start.sh && tail -f /dev/null
 # todo find a better way to keep it running https://stackoverflow.com/a/30209974
-
