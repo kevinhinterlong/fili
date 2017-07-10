@@ -34,6 +34,8 @@ Current
 
 
 ### Changed:
+- [Change id field in DefaultDimensionField to lower case for Navi compatibility.](https://github.com/yahoo/fili/pull/423)
+    * Navi's default setting only recongizes lower case 'id' key name.
 
 - [Change id field in DefaultDimensionField to lower case for Navi compatibility.](https://github.com/yahoo/fili/pull/423)
     * Navi's default setting only recongizes lower case 'id' key name.
