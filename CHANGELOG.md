@@ -227,7 +227,8 @@ Thanks to everyone who contributed to this release!
 @dejan2609 Dejan Stojadinović
 
 ### Added:
-- [Added dockerfile and updated README](https://github.com/yahoo/fili/pull/429)
+- [Add dockerfile and update README](https://github.com/yahoo/fili/pull/429)
+    * Make a Dockerfile for the Wikipedia example 
 
 - [Latest Time Macro](https://github.com/yahoo/fili/pull/697)
     * Added `logicalTableAvailability` to `TableUtils` which returns the union of intervals for the logical table.
