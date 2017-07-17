@@ -10,6 +10,7 @@ import com.yahoo.bard.webservice.config.SystemConfigProvider;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.AdminServlet;
 
+import org.eclipse.jetty.server.DispatcherType;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -20,8 +21,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import java.util.EnumSet;
-
-import javax.servlet.DispatcherType;
 
 /**
  * Launch Bard in Embedded Jetty.

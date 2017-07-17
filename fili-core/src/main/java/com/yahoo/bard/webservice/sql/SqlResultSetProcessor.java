@@ -154,8 +154,8 @@ public class SqlResultSetProcessor {
     }
 
     /**
-     * Reads the result set and converts it into a result that druid
-     * would produce.
+     * Reads and appends the result set to a list of results to be processed. All results are processed and output
+     * in the same order in which they are added (i.e. no ordering/limiting/filtering can be applied at this stage).
      *
      * @param resultSet  The result set of the druid query.
      *

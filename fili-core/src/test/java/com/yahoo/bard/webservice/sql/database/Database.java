@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -28,7 +27,10 @@ import javax.sql.DataSource;
  * Simple, in-memory database with the example wikiticker data loaded.
  */
 public class Database {
-    private static final String DATABASE_URL = "jdbc:h2:mem:test";
+    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/wiki";
+    private static final String DATABASE_DRIVER = org.h2.Driver.class.getName();
+    private static final String DATABASE_USERNAME = "root";
+    private static final String DATABASE_PASSWORD = "root";
     private static final String WIKITICKER_JSON_DATA = "wikiticker-2015-09-12-sampled.json";
     private static Connection connection;
     public static final String TIME = "TIME";
@@ -54,6 +56,10 @@ public class Database {
     public static final String ID = "ID";
     public static final String METRO_CODE = "metroCode";
 
+    public static void main(String[] args) throws IOException, SQLException {
+        initializeDatabase();
+    }
+
     /**
      * Gets an in memory database with the {@link WikitickerEntry} from the example data.
      *
@@ -64,7 +70,8 @@ public class Database {
      */
     public static Connection initializeDatabase() throws SQLException, IOException {
         if (connection == null) {
-            connection = DriverManager.getConnection(DATABASE_URL);
+            connection = JdbcSchema.dataSource(DATABASE_URL, DATABASE_DRIVER, DATABASE_USERNAME, DATABASE_PASSWORD)
+                    .getConnection();
         } else {
             return connection;
         }
@@ -92,7 +99,7 @@ public class Database {
                 IS_ANONYMOUS + "\" BOOLEAN, \"" +
                 REGION_ISO_CODE + "\" VARCHAR(256), \"" +
                 CHANNEL + "\" VARCHAR(256), \"" +
-                REGION_NAME + "\" VARCHAR(256), " +
+                REGION_NAME + "\" VARCHAR(256) " +
                 ")"
         );
 
@@ -116,7 +123,7 @@ public class Database {
             preparedStatement.setInt(4, e.getAdded());
             preparedStatement.setTimestamp(
                     5,
-                TimestampUtils.timestampFromString(e.getTime())
+                    TimestampUtils.timestampFromString(e.getTime())
             );
             preparedStatement.setBoolean(6, e.getIsNew());
             preparedStatement.setBoolean(7, e.getIsRobot());

@@ -7,6 +7,7 @@ import com.yahoo.bard.webservice.druid.client.FailureCallback;
 import com.yahoo.bard.webservice.druid.client.SuccessCallback;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
 import com.yahoo.bard.webservice.druid.model.query.DruidQuery;
+import com.yahoo.bard.webservice.logging.RequestLog;
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -85,6 +86,7 @@ public class DefaultSqlBackedClient implements SqlBackedClient {
             FailureCallback failureCallback
     ) {
         // todo requestlog context stuff
+        final RequestLog logCtx = RequestLog.dump();
         return CompletableFuture.supplyAsync(() -> {
                     try {
                         JsonNode jsonNode = executeAndProcessQuery((DruidAggregationQuery) druidQuery);
@@ -97,6 +99,8 @@ public class DefaultSqlBackedClient implements SqlBackedClient {
                         if (failureCallback != null) {
                             failureCallback.dispatch(e);
                         }
+                    } finally {
+                        RequestLog.restore(logCtx);
                     }
                     return null;
                 }
@@ -128,9 +132,13 @@ public class DefaultSqlBackedClient implements SqlBackedClient {
                     jsonWriter,
                     druidQueryToSqlConverter.getTimeConverter()
             );
+
+            // The only time we make multiple queries and aggregate the results is for TopN, and TopN groups the
+            // bucked results by time. So as long as the queries are made and added in order this will work.
             for (String sqlQuery : sqlQueries) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
                      ResultSet resultSet = preparedStatement.executeQuery()) {
+
                     resultSetProcessor.addResultSet(resultSet);
 
                 } catch (SQLException e) {

@@ -7,10 +7,10 @@ note that there are some restrictions since Fili is optimized for Druid.
     - `bard__database_url = jdbc:h2:mem:test`
     
 - Set your database driver (TODO make sure to include maven repo if needed)
-    - `bard_database_driver = org.h2.Driver`
+    - `bard__database_driver = org.h2.Driver`
     
 - Set your database schema (default is PUBLIC)
-    - `bard_database_schema =` 
+    - `bard__database_schema =` 
         
         NOTE: this is fine unless you did `create schema "name"; set schema "name";`
         (i.e. `SELECT * FROM "SCHEM_NAME"."TABLE_NAME";`)
