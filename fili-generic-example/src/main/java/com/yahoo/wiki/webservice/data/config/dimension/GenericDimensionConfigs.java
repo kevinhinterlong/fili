@@ -14,11 +14,11 @@ import com.yahoo.bard.webservice.util.Utils;
 import com.yahoo.wiki.webservice.data.config.auto.DataSourceConfiguration;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -78,7 +78,10 @@ public class GenericDimensionConfigs {
      * @return the dimension configurations for this datasource
      */
     public Set<DimensionConfig> getDimensionConfigs(DataSourceConfiguration dataSourceConfiguration) {
-        return dataSourceToDimensionConfigs.getOrDefault(dataSourceConfiguration.getName(), Collections.emptySet());
+        return dataSourceToDimensionConfigs.getOrDefault(
+                dataSourceConfiguration.getName(),
+                Collections.emptySet()
+        );
     }
 
     /**
