@@ -26,6 +26,7 @@ import com.yahoo.wiki.webservice.data.config.metric.FiliApiMetricName;
 
 import org.joda.time.DateTimeZone;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -48,6 +49,8 @@ public class GenericTableLoader extends BaseTableLoader {
     // Set up the table definitions
     private final Map<String, Set<PhysicalTableDefinition>> dataSourceToTableDefinitions = new HashMap<>();
     private final Supplier<List<? extends DataSourceConfiguration>> configLoader;
+    public static final String DRUID_BACKED = "druid_";
+    public static final String SQL_BACKED = "sql_";
 
     /**
      * Constructor.
@@ -117,7 +120,6 @@ public class GenericTableLoader extends BaseTableLoader {
 
             dataSourceToValidGrains.put(dataSourceConfiguration.getName(), getGranularities(dataSourceConfiguration));
         });
-
     }
 
     /**
@@ -153,7 +155,7 @@ public class GenericTableLoader extends BaseTableLoader {
                 DateTimeZone.UTC
         );
         return new LinkedHashSet<>(
-                Collections.singletonList(
+                Arrays.asList(
                         new ConcretePhysicalTableDefinition(
                                 dataSourceConfiguration.getTableName(),
                                 zonedTimeGrain,
@@ -171,6 +173,17 @@ public class GenericTableLoader extends BaseTableLoader {
      */
     @Override
     public void loadTableDictionary(ResourceDictionaries dictionaries) {
+        loadWithScope(DRUID_BACKED, dictionaries);
+        loadWithScope(SQL_BACKED, dictionaries);
+    }
+
+    /**
+     * Loads a logical table with a prefixed scope.
+     *
+     * @param scope  the scope to prepend.
+     * @param dictionaries  ResourceDictionaries to load with each table.
+     */
+    private void loadWithScope(String scope, ResourceDictionaries dictionaries) {
         configLoader.get()
                 .forEach(table -> {
                     Set<TableName> currentTableGroupTableNames = dataSourceToTableDefinitions.get(table.getName())
@@ -186,7 +199,7 @@ public class GenericTableLoader extends BaseTableLoader {
                     );
 
                     loadLogicalTableWithGranularities(
-                            table.getTableName().asName(),
+                            scope + table.getTableName().asName(),
                             tableGroup,
                             dataSourceToValidGrains.get(table.getName()),
                             dictionaries

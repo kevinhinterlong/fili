@@ -35,6 +35,7 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>com.yahoo.fili</groupId>
             <artifactId>fili</artifactId>
@@ -92,6 +93,11 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

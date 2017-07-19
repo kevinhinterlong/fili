@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,8 @@ public class DefaultSqlTimeConverter implements SqlTimeConverter {
 
     @Override
     public List<SqlDatePartFunction> timeGrainToDatePartFunctions(TimeGrain timeGrain) {
-        return TIMEGRAIN_TO_GROUPBY.get(timeGrain);
+        DefaultTimeGrain defaultTimeGrain = DefaultTimeGrain.valueOf(timeGrain.getName().toUpperCase(Locale.ENGLISH));
+        return TIMEGRAIN_TO_GROUPBY.get(defaultTimeGrain);
     }
 
     /**

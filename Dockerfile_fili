@@ -1,0 +1,16 @@
+FROM openjdk:alpine
+
+# Copy the fili directory into /opt/fili inside docker
+RUN mkdir -p /opt/fili
+COPY . /opt/fili
+WORKDIR /opt/fili
+
+# Install maven and git to build fili, expose 9998
+RUN apk update && apk add maven git curl
+RUN mvn install -DskipTests -Dcheckstyle.skip=true -Dmaven.javadoc.skip=true
+
+EXPOSE 9998
+
+# Run the fili module [fili-wikipedia-example, fili-generic-example]
+RUN chmod +x fili_start.sh
+CMD ./fili_start.sh

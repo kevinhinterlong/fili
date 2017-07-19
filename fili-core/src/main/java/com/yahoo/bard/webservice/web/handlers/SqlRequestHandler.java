@@ -13,7 +13,6 @@ import com.yahoo.bard.webservice.sql.SqlAggregationQuery;
 import com.yahoo.bard.webservice.sql.SqlBackedClient;
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper;
 import com.yahoo.bard.webservice.web.DataApiRequest;
-import com.yahoo.bard.webservice.web.ResponseFormatType;
 import com.yahoo.bard.webservice.web.responseprocessors.LoggingContext;
 import com.yahoo.bard.webservice.web.responseprocessors.ResponseProcessor;
 
@@ -96,7 +95,7 @@ public class SqlRequestHandler implements DataRequestHandler {
             save requestlog context
          */
         //todo better check for sql query
-        if (sqlConverter != null && request.getFormat().equals(ResponseFormatType.SQL)) {
+        if (sqlConverter != null && request.getTable().getName().startsWith("sql_")) {
             LOG.info("Intercepting for sql backend");
             LoggingContext copy = new LoggingContext(RequestLog.copy());
             SuccessCallback success = rootNode -> {
