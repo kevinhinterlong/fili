@@ -38,7 +38,8 @@ public class GenericMain {
      * @throws Exception if the server fails to start or crashes.
      */
     public static void main(String[] args) throws Exception {
-        Database.initializeDatabase();
+        RedditDatabase.initializeDatabase();
+        WikiDatabase.initializeDatabase();
 
 
         int port = SYSTEM_CONFIG.getIntProperty(FILI_PORT);

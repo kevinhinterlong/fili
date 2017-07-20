@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 /**
  * Simple, in-memory database with the example wikiticker data loaded.
  */
-public class Database {
-    private static final String DATABASE_URL = "jdbc:h2:mem:test";
+public class WikiDatabase {
+    private static final String DATABASE_URL = "jdbc:h2:mem:tables";
     private static final String WIKITICKER_JSON_DATA = "wikiticker-2015-09-12-sampled.json";
     private static Connection connection;
     public static final String TIME = "TIME";
@@ -147,7 +147,7 @@ public class Database {
      */
     public static List<WikitickerEntry> readJsonFile() throws IOException {
         List<WikitickerEntry> entries = new ArrayList<>();
-        try (InputStream wikiData = Database.class.getClassLoader().getResourceAsStream(WIKITICKER_JSON_DATA)) {
+        try (InputStream wikiData = WikiDatabase.class.getClassLoader().getResourceAsStream(WIKITICKER_JSON_DATA)) {
             List<String> wikiDataLines =
                     new BufferedReader(new InputStreamReader(
                             wikiData,
