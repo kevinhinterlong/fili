@@ -227,6 +227,7 @@ Thanks to everyone who contributed to this release!
 @dejan2609 Dejan Stojadinović
 
 ### Added:
+
 - [Add dockerfile and update README](https://github.com/yahoo/fili/pull/429)
     * Make a Dockerfile for the Wikipedia example 
 
