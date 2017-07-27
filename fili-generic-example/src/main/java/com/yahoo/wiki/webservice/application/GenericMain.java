@@ -38,7 +38,7 @@ public class GenericMain {
      * @throws Exception if the server fails to start or crashes.
      */
     public static void main(String[] args) throws Exception {
-        RedditDatabase.initializeDatabase();
+        // RedditDatabase.initializeDatabase();
         WikiDatabase.initializeDatabase();
 
 
