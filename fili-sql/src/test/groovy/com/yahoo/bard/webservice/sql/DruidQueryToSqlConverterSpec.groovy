@@ -12,10 +12,10 @@ import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.END
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.START
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.getDimensions
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.getWikitickerDatasource
-import static com.yahoo.bard.webservice.sql.database.Database.ADDED
-import static com.yahoo.bard.webservice.sql.database.Database.DELETED
-import static com.yahoo.bard.webservice.sql.database.Database.IS_ROBOT
-import static com.yahoo.bard.webservice.sql.database.Database.METRO_CODE
+import static com.yahoo.bard.webservice.database.Database.ADDED
+import static com.yahoo.bard.webservice.database.Database.DELETED
+import static com.yahoo.bard.webservice.database.Database.IS_ROBOT
+import static com.yahoo.bard.webservice.database.Database.METRO_CODE
 import static java.util.Arrays.asList
 
 import com.yahoo.bard.webservice.druid.model.orderby.LimitSpec
@@ -25,7 +25,7 @@ import com.yahoo.bard.webservice.druid.model.query.DruidQuery
 import com.yahoo.bard.webservice.druid.model.query.Granularity
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder
-import com.yahoo.bard.webservice.sql.database.Database
+import com.yahoo.bard.webservice.database.Database
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper
 
 import spock.lang.Specification

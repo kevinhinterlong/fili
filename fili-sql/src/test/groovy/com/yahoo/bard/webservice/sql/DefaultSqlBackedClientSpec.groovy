@@ -31,15 +31,15 @@ import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.get
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.getDimensions
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.groupByQuery
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.timeSeriesQuery
-import static com.yahoo.bard.webservice.sql.database.Database.ADDED
-import static com.yahoo.bard.webservice.sql.database.Database.COMMENT
-import static com.yahoo.bard.webservice.sql.database.Database.DELETED
-import static com.yahoo.bard.webservice.sql.database.Database.DELTA
-import static com.yahoo.bard.webservice.sql.database.Database.IS_NEW
-import static com.yahoo.bard.webservice.sql.database.Database.IS_ROBOT
-import static com.yahoo.bard.webservice.sql.database.Database.PAGE
-import static com.yahoo.bard.webservice.sql.database.Database.USER
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.ADDED
+import static com.yahoo.bard.webservice.database.Database.COMMENT
+import static com.yahoo.bard.webservice.database.Database.DELETED
+import static com.yahoo.bard.webservice.database.Database.DELTA
+import static com.yahoo.bard.webservice.database.Database.IS_NEW
+import static com.yahoo.bard.webservice.database.Database.IS_ROBOT
+import static com.yahoo.bard.webservice.database.Database.PAGE
+import static com.yahoo.bard.webservice.database.Database.USER
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 import static java.util.Arrays.asList
 
 import com.yahoo.bard.webservice.data.DruidResponseParser
@@ -57,7 +57,7 @@ import com.yahoo.bard.webservice.druid.model.query.DruidQuery
 import com.yahoo.bard.webservice.druid.model.query.Granularity
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery
-import com.yahoo.bard.webservice.sql.database.Database
+import com.yahoo.bard.webservice.database.Database
 import com.yahoo.bard.webservice.table.Column
 
 import com.fasterxml.jackson.databind.JsonNode

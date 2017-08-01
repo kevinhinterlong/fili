@@ -2,26 +2,26 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.sql.builders
 
-import static com.yahoo.bard.webservice.sql.database.Database.ADDED
-import static com.yahoo.bard.webservice.sql.database.Database.CHANNEL
-import static com.yahoo.bard.webservice.sql.database.Database.CITY_NAME
-import static com.yahoo.bard.webservice.sql.database.Database.COMMENT
-import static com.yahoo.bard.webservice.sql.database.Database.COUNTRY_ISO_CODE
-import static com.yahoo.bard.webservice.sql.database.Database.COUNTRY_NAME
-import static com.yahoo.bard.webservice.sql.database.Database.DELETED
-import static com.yahoo.bard.webservice.sql.database.Database.DELTA
-import static com.yahoo.bard.webservice.sql.database.Database.IS_ANONYMOUS
-import static com.yahoo.bard.webservice.sql.database.Database.IS_MINOR
-import static com.yahoo.bard.webservice.sql.database.Database.IS_NEW
-import static com.yahoo.bard.webservice.sql.database.Database.IS_ROBOT
-import static com.yahoo.bard.webservice.sql.database.Database.IS_UNPATROLLED
-import static com.yahoo.bard.webservice.sql.database.Database.METRO_CODE
-import static com.yahoo.bard.webservice.sql.database.Database.NAMESPACE
-import static com.yahoo.bard.webservice.sql.database.Database.PAGE
-import static com.yahoo.bard.webservice.sql.database.Database.REGION_ISO_CODE
-import static com.yahoo.bard.webservice.sql.database.Database.REGION_NAME
-import static com.yahoo.bard.webservice.sql.database.Database.USER
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.ADDED
+import static com.yahoo.bard.webservice.database.Database.CHANNEL
+import static com.yahoo.bard.webservice.database.Database.CITY_NAME
+import static com.yahoo.bard.webservice.database.Database.COMMENT
+import static com.yahoo.bard.webservice.database.Database.COUNTRY_ISO_CODE
+import static com.yahoo.bard.webservice.database.Database.COUNTRY_NAME
+import static com.yahoo.bard.webservice.database.Database.DELETED
+import static com.yahoo.bard.webservice.database.Database.DELTA
+import static com.yahoo.bard.webservice.database.Database.IS_ANONYMOUS
+import static com.yahoo.bard.webservice.database.Database.IS_MINOR
+import static com.yahoo.bard.webservice.database.Database.IS_NEW
+import static com.yahoo.bard.webservice.database.Database.IS_ROBOT
+import static com.yahoo.bard.webservice.database.Database.IS_UNPATROLLED
+import static com.yahoo.bard.webservice.database.Database.METRO_CODE
+import static com.yahoo.bard.webservice.database.Database.NAMESPACE
+import static com.yahoo.bard.webservice.database.Database.PAGE
+import static com.yahoo.bard.webservice.database.Database.REGION_ISO_CODE
+import static com.yahoo.bard.webservice.database.Database.REGION_NAME
+import static com.yahoo.bard.webservice.database.Database.USER
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 import static java.util.Arrays.asList
 
 import com.yahoo.bard.webservice.data.config.dimension.DefaultDimensionField

@@ -5,8 +5,8 @@ package com.yahoo.bard.webservice.sql;
 import com.yahoo.bard.webservice.druid.model.aggregation.Aggregation;
 import com.yahoo.bard.webservice.druid.model.postaggregation.PostAggregation;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
-import com.yahoo.bard.webservice.sql.evaluator.PostAggregationEvaluator;
 import com.yahoo.bard.webservice.sql.helper.SqlTimeConverter;
+import com.yahoo.bard.webservice.sql.evaluator.PostAggregationEvaluator;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -10,9 +10,9 @@ import static com.yahoo.bard.webservice.sql.builders.Havings.equals
 import static com.yahoo.bard.webservice.sql.builders.Havings.gt
 import static com.yahoo.bard.webservice.sql.builders.Havings.lt
 import static com.yahoo.bard.webservice.sql.builders.Havings.or
-import static com.yahoo.bard.webservice.sql.database.Database.ADDED
-import static com.yahoo.bard.webservice.sql.database.Database.DELETED
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.ADDED
+import static com.yahoo.bard.webservice.database.Database.DELETED
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 import static java.util.Arrays.asList
 
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain
@@ -20,7 +20,7 @@ import com.yahoo.bard.webservice.sql.ApiToFieldMapper
 import com.yahoo.bard.webservice.sql.aggregation.DefaultDruidSqlAggregationConverter
 import com.yahoo.bard.webservice.sql.aggregation.DruidSqlAggregationConverter
 import com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder
-import com.yahoo.bard.webservice.sql.database.Database
+import com.yahoo.bard.webservice.database.Database
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper
 import com.yahoo.bard.webservice.sql.helper.DefaultSqlTimeConverter
 import com.yahoo.bard.webservice.sql.helper.SqlTimeConverter

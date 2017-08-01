@@ -6,14 +6,14 @@ import static com.yahoo.bard.webservice.sql.builders.Filters.and
 import static com.yahoo.bard.webservice.sql.builders.Filters.not
 import static com.yahoo.bard.webservice.sql.builders.Filters.or
 import static com.yahoo.bard.webservice.sql.builders.Filters.search
-import static com.yahoo.bard.webservice.sql.database.Database.IS_NEW
-import static com.yahoo.bard.webservice.sql.database.Database.IS_ROBOT
-import static com.yahoo.bard.webservice.sql.database.Database.METRO_CODE
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.IS_NEW
+import static com.yahoo.bard.webservice.database.Database.IS_ROBOT
+import static com.yahoo.bard.webservice.database.Database.METRO_CODE
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 
 import com.yahoo.bard.webservice.sql.ApiToFieldMapper
 import com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder
-import com.yahoo.bard.webservice.sql.database.Database
+import com.yahoo.bard.webservice.database.Database
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper
 
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter

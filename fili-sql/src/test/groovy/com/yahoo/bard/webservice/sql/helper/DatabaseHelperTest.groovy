@@ -2,10 +2,10 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.sql.helper
 
-import static com.yahoo.bard.webservice.sql.database.Database.TIME
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.TIME
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 
-import com.yahoo.bard.webservice.sql.database.Database
+import com.yahoo.bard.webservice.database.Database
 
 import spock.lang.Specification
 

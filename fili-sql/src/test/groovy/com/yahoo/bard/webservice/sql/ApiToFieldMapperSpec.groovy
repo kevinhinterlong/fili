@@ -3,7 +3,7 @@
 package com.yahoo.bard.webservice.sql
 
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.getDictionary
-import static com.yahoo.bard.webservice.sql.database.Database.WIKITICKER
+import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 
 import com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder
 

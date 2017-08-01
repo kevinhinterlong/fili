@@ -24,6 +24,7 @@ import com.yahoo.bard.webservice.web.handlers.PaginationRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.PartialDataRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.SplitQueryRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.DateTimeSortRequestHandler;
+import com.yahoo.bard.webservice.web.handlers.SqlRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.TopNMapperRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.VolatileDataRequestHandler;
 import com.yahoo.bard.webservice.web.handlers.WebServiceSelectorRequestHandler;
@@ -48,7 +49,7 @@ import javax.validation.constraints.NotNull;
  * </ul>
  */
 @Singleton
-public class DruidWorkflow implements RequestWorkflowProvider {
+public class SqlWorkflow implements RequestWorkflowProvider {
 
     private static final SystemConfig SYSTEM_CONFIG = SystemConfigProvider.getInstance();
 
@@ -83,7 +84,7 @@ public class DruidWorkflow implements RequestWorkflowProvider {
      * @param mapper  JSON mapper
      */
     @Inject
-    public DruidWorkflow(
+    public SqlWorkflow(
             @NotNull DataCache<?> dataCache,
             @Named("uiDruidWebService") DruidWebService uiWebService,
             @Named("nonUiDruidWebService") DruidWebService nonUiWebService,
@@ -156,6 +157,8 @@ public class DruidWorkflow implements RequestWorkflowProvider {
                 nonUiHandler,
                 mapper
         );
+
+        handler = new SqlRequestHandler(handler, mapper);
 
         //The PaginationRequestHandler adds a mapper to the mapper chain that strips the result set down to just the
         //page desired. That mapper should be one of the last mappers to execute, so the handler that adds the mapper
