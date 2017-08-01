@@ -4,6 +4,7 @@ package com.yahoo.bard.webservice.web.handlers;
 
 import com.yahoo.bard.webservice.config.SystemConfig;
 import com.yahoo.bard.webservice.config.SystemConfigProvider;
+import com.yahoo.bard.webservice.data.config.table.ConcreteSqlPhysicalTableDefinition;
 import com.yahoo.bard.webservice.druid.client.FailureCallback;
 import com.yahoo.bard.webservice.druid.client.SuccessCallback;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
@@ -12,6 +13,8 @@ import com.yahoo.bard.webservice.sql.DefaultSqlBackedClient;
 import com.yahoo.bard.webservice.sql.SqlAggregationQuery;
 import com.yahoo.bard.webservice.sql.SqlBackedClient;
 import com.yahoo.bard.webservice.sql.helper.CalciteHelper;
+import com.yahoo.bard.webservice.table.PhysicalTable;
+import com.yahoo.bard.webservice.table.StrictSqlPhysicalTable;
 import com.yahoo.bard.webservice.web.DataApiRequest;
 import com.yahoo.bard.webservice.web.ResponseFormatType;
 import com.yahoo.bard.webservice.web.responseprocessors.LoggingContext;
@@ -23,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -90,13 +94,13 @@ public class SqlRequestHandler implements DataRequestHandler {
             DruidAggregationQuery<?> druidQuery,
             ResponseProcessor response
     ) {
-        /*
-        todo:
-            AsyncDruidWebServiceImpl#sendRequest(...)}
-            save requestlog context
-         */
-        //todo better check for sql query
-        if (sqlConverter != null && request.getFormat().equals(ResponseFormatType.SQL)) {
+        boolean isSqlBacked = request.getTable()
+                .getTableGroup()
+                .getPhysicalTables()
+                .stream()
+                .allMatch(StrictSqlPhysicalTable.class::isInstance);
+
+        if (sqlConverter != null && isSqlBacked) {
             LOG.info("Intercepting for sql backend");
             LoggingContext copy = new LoggingContext(RequestLog.copy());
             SuccessCallback success = rootNode -> {
