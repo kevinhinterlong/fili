@@ -112,14 +112,7 @@ Flow
 While there are no restrictions on the states, since they are only indicated by labels, this table details the expected 
 state transitions from one phase to another.
 
-| Start                                 | End                                                                                  |
-|---------------------------------------|--------------------------------------------------------------------------------------|
-| -                                     | [Work in Progress](#work-in-progress), [Reviewable](#reviewable), [Closed*](#closed) |
-| [Work in Progress](#work-in-progress) | [Reviewable](#reviewable), [Closed*](#closed)                                        |
-| [Reviewable](#reviewable)             | [Work in Progress](#work-in-progress), [Mergeable](#mergeable), [Closed*](#closed)   |
-| [Mergeable](#mergeable)               | [Merged*](#merged), [Closed*](#closed)                                               |
-| [Merged*](#merged)                    | -                                                                                    |
-| [Closed*](#closed)                    | [Work in Progress](#work-in-progress), [Reviewable](#reviewable)                     |
+![Fili Pull Request Workflow](../images/Fili_PR_Workflow.png)
 
 Flags
 -----
