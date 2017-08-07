@@ -2,9 +2,9 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.util
 
-import org.reactivestreams.Subscriber
-
 import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.observers.TestObserver
 import io.reactivex.subscribers.TestSubscriber
 
 import java.util.concurrent.TimeUnit
@@ -23,8 +23,8 @@ class ReactiveTestUtils {
      *
      * @return The list of subscribers that were subscribed to the observable
      */
-    static <T> List<Subscriber<T>> subscribeObservers (Observable<T> observable, int numObservers) {
-        List<Subscriber<T>> subscribers = (1..numObservers).collect {new TestSubscriber<>()}
+    static <T> List<Observer<T>> subscribeObservers (Observable<T> observable, int numObservers) {
+        List<TestObserver<T>> subscribers = (1..numObservers).collect {new TestObserver<>()}
         subscribers.every {observable.subscribe(it)}
         return subscribers
     }
@@ -43,12 +43,12 @@ class ReactiveTestUtils {
      * message is received within the timeout
      */
     static void assertCompletedWithoutError(
-            TestSubscriber subscriber,
+            TestObserver subscriber,
             int timeout = 5,
             TimeUnit timeoutUnit = TimeUnit.SECONDS
     ) {
         subscriber.awaitTerminalEvent(timeout, timeoutUnit)
         subscriber.assertNoErrors()
-        subscriber.assertCompleted()
+        subscriber.assertComplete()
     }
 }

@@ -2,7 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.async.broadcastchannels
 
-import io.reactivex.subscribers.TestSubscriber
+import io.reactivex.observers.TestObserver
 import spock.lang.Specification
 import spock.lang.Unroll
 import spock.util.concurrent.PollingConditions
@@ -74,8 +74,8 @@ abstract class BroadcastChannelSpec extends Specification {
 
     def "When a message is sent by one BroadcastChannel, it is broadcast to all BroadcastChannels"() {
         setup:
-        TestSubscriber<String> broadcastListenerA = new TestSubscriber<>()
-        TestSubscriber<String> broadcastListenerB = new TestSubscriber<>()
+        TestObserver<String> broadcastListenerA = new TestObserver<>()
+        TestObserver<String> broadcastListenerB = new TestObserver<>()
 
         broadcastChannelA.getNotifications().subscribe(broadcastListenerA)
 
@@ -122,14 +122,14 @@ abstract class BroadcastChannelSpec extends Specification {
     }
 
     /**
-     * Tests whether the testSubscriber receives listenerEvents within the timeout specified by condition
+     * Tests whether the TestObserver receives listenerEvents within the timeout specified by condition
      *
-     * @param listener  the TestSubscriber listening to the above events
+     * @param listener  the TestObserver listening to the above events
      * @param events  A List of expected listener events
      */
-    void validateListener(TestSubscriber<String> listener, List<String> events) {
+    void validateListener(TestObserver<String> listener, List<String> events) {
         condition.eventually {
-            listener.getOnNextEvents() == events
+            listener.getEvents().get(0) == events
         }
     }
 }

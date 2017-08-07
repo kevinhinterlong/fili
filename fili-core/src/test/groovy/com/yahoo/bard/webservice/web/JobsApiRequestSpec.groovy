@@ -17,6 +17,7 @@ import com.yahoo.bard.webservice.async.preresponses.stores.PreResponseStore
 import com.yahoo.bard.webservice.async.preresponses.stores.PreResponseTestingUtils
 import com.yahoo.bard.webservice.async.broadcastchannels.SimpleBroadcastChannel
 
+import io.reactivex.observers.TestObserver
 import io.reactivex.subscribers.TestSubscriber
 import io.reactivex.subjects.PublishSubject;
 import spock.lang.Specification
@@ -64,7 +65,7 @@ class JobsApiRequestSpec extends Specification {
 
         preResponseStore = new HashPreResponseStore();
         (1..2).each {
-            preResponseStore.save("ticket$it", PreResponseTestingUtils.buildPreResponse("2016-04-2$it")).toBlocking().first()
+            preResponseStore.save("ticket$it", PreResponseTestingUtils.buildPreResponse("2016-04-2$it")).blockingFirst()
         }
 
         ticket1PreResponse = PreResponseTestingUtils.buildPreResponse("2016-04-21")
@@ -85,7 +86,7 @@ class JobsApiRequestSpec extends Specification {
 
     def "getJobViewObservable returns an Observable wrapping the job to be returned to the user"() {
         setup:
-        TestSubscriber<Map<String, String>> getSubscriber = new TestSubscriber<>()
+        TestObserver<Map<String, String>> getSubscriber = new TestObserver<>()
         Map<String, String> job = [
                 query : "https://localhost:9998/v1/data/QUERY",
                 results : "https://localhost:9998/v1/jobs/ticket1/results",
@@ -102,43 +103,43 @@ class JobsApiRequestSpec extends Specification {
         defaultJobsApiRequest.getJobViewObservable("ticket1").subscribe(getSubscriber)
 
         then:
-        getSubscriber.assertReceivedOnNext([job])
+        getSubscriber.assertResult(job)
     }
 
     def "getJobViewObservable results in onError being called on its observers if the job ticket does not exist in the ApiJobStore"() {
         setup:
-        TestSubscriber<Map<String, String>> errorSubscriber = new TestSubscriber<>()
+        TestObserver<Map<String, String>> errorSubscriber = new TestObserver<>()
 
         when:
         defaultJobsApiRequest.getJobViewObservable("IDontExist").subscribe(errorSubscriber)
 
         then:
         errorSubscriber.assertError(JobNotFoundException.class)
-        errorSubscriber.getOnErrorEvents().get(0).getMessage() == "No job found with job ticket IDontExist"
+        errorSubscriber.assertErrorMessage("No job found with job ticket IDontExist")
     }
 
     def "getJobViewObservable results in onError being called on it's observers if the JobRow cannot be correctly mapped to a Job payload"() {
         setup:
-        TestSubscriber<Map<String, String>> errorSubscriber = new TestSubscriber<>()
+        TestObserver<Map<String, String>> errorSubscriber = new TestObserver<>()
 
         when:
         defaultJobsApiRequest.getJobViewObservable("badTicket").subscribe(errorSubscriber)
 
         then:
         errorSubscriber.assertError(JobRequestFailedException.class)
-        errorSubscriber.getOnErrorEvents().get(0).getMessage() == "Job with ticket badTicket cannot be retrieved due to internal error"
+        errorSubscriber.assertErrorMessage("Job with ticket badTicket cannot be retrieved due to internal error")
     }
 
     def "getJobViews results in onError being called on it's observers if any of the JobRows in the ApiJobStore cannot be correctly mapped to a Job payload"() {
         setup:
-        TestSubscriber<Map<String, String>> errorSubscriber = new TestSubscriber<>()
+        TestObserver<Map<String, String>> errorSubscriber = new TestObserver<>()
 
         when:
         defaultJobsApiRequest.getJobViews().subscribe(errorSubscriber)
 
         then:
         errorSubscriber.assertError(JobRequestFailedException.class)
-        errorSubscriber.getOnErrorEvents().get(0).getMessage() == "Jobs cannot be retrieved successfully due to internal error"
+        errorSubscriber.assertErrorMessage("Jobs cannot be retrieved successfully due to internal error")
     }
 
     def "buildJobStoreFilter correctly parses a single filter query and returns ApiJobStoreFilter"() {
@@ -192,7 +193,7 @@ class JobsApiRequestSpec extends Specification {
 
     def "getFilteredJobViews returns JobRows that satisfy the given filter"() {
         setup:
-        TestSubscriber<JobRow> testSubscriber = new TestSubscriber<>()
+        TestObserver<JobRow> testObserver = new TestObserver<>()
 
         HashJobStore apiJobStore = new HashJobStore()
         JobRow userFooJobRow1 = JobTestUtils.buildJobRow(1)
@@ -239,9 +240,9 @@ class JobsApiRequestSpec extends Specification {
         ]
 
         when:
-        apiRequest.getJobViews().subscribe(testSubscriber)
+        apiRequest.getJobViews().subscribe(testObserver)
 
         then:
-        testSubscriber.assertReceivedOnNext([jobPayload1, jobPayload2])
+        testObserver.assertResult(jobPayload1, jobPayload2)
     }
 }

@@ -9,7 +9,7 @@ import com.yahoo.bard.webservice.async.jobs.JobTestUtils
 import com.yahoo.bard.webservice.async.jobs.jobrows.JobRow
 import com.yahoo.bard.webservice.util.ReactiveTestUtils
 
-import io.reactivex.subscribers.TestSubscriber
+import io.reactivex.observers.TestObserver
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -86,7 +86,7 @@ abstract class ApiJobStoreSpec extends Specification {
              * invoking `first` forces the blocking `Observable` to block, and return the first message as soon as it
              * is available.
              */
-            store.save(value).toBlocking().first()
+            store.save(value).blockingFirst()
         }
         childSetup()
     }
@@ -98,30 +98,30 @@ abstract class ApiJobStoreSpec extends Specification {
     @Unroll
     def "Getting #id returns #oldMetadata, but after setting #id to #newMetadata, getting #id returns #newMetadata"() {
         given: "A subscriber for getting, one for setting, and one for getting the updated value"
-        TestSubscriber<JobRow> getSubscriber = new TestSubscriber<>()
-        TestSubscriber<JobRow> updateSubscriber = new TestSubscriber<>()
-        TestSubscriber<JobRow> setSubscriber = new TestSubscriber<>()
+        TestObserver<JobRow> getSubscriber = new TestObserver<>()
+        TestObserver<JobRow> updateSubscriber = new TestObserver<>()
+        TestObserver<JobRow> setSubscriber = new TestObserver<>()
 
         when: "We get the data at id"
         store.get(id).subscribe(getSubscriber)
 
         then: "We get back the data originally stored there"
         ReactiveTestUtils.assertCompletedWithoutError(getSubscriber)
-        getSubscriber.assertReceivedOnNext(oldMetadata)
+        getSubscriber.assertResult(oldMetadata.toArray())
 
         when: "We save the new data to the store"
         store.save(newMetadata).subscribe(setSubscriber)
 
         then: "We get back the id of the data stored"
         ReactiveTestUtils.assertCompletedWithoutError(setSubscriber)
-        setSubscriber.assertReceivedOnNext([newMetadata])
+        setSubscriber.assertResult(newMetadata)
 
         when: "We attempt to get that same id"
         store.get(id).subscribe(updateSubscriber)
 
         then: "We get the updated data"
         ReactiveTestUtils.assertCompletedWithoutError(updateSubscriber)
-        updateSubscriber.assertReceivedOnNext([newMetadata])
+        updateSubscriber.assertResult(newMetadata)
 
         where:
         id  | oldMetadata                | newMetadata
@@ -131,13 +131,13 @@ abstract class ApiJobStoreSpec extends Specification {
 
     def "getAllRows returns all the rows stored in the job table"() {
         given: "A subscriber to listen for all the rows"
-        TestSubscriber<JobRow> allRowsSubscriber = new TestSubscriber<>()
+        TestObserver<JobRow> allRowsSubscriber = new TestObserver<>()
 
         when: "We subscribe to observer that gets all the rows"
         store.getAllRows().subscribe(allRowsSubscriber)
 
         then: "The subscriber gets all the rows"
         ReactiveTestUtils.assertCompletedWithoutError(allRowsSubscriber)
-        allRowsSubscriber.getOnNextEvents() as Set == getAllRowData()
+        allRowsSubscriber.getEvents().get(0) as Set == getAllRowData()
     }
 }

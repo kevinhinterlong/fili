@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.ObjectWriter
 import org.joda.time.DateTime
 
 import io.reactivex.Observable
+import io.reactivex.observers.TestObserver
 import io.reactivex.subjects.PublishSubject
-import io.reactivex.subscribers.TestSubscriber
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Subject
@@ -55,10 +55,10 @@ class DefaultAsynchronousWorkflowsBuilderSpec extends Specification {
 
     Function<JobRow, String> jobRowSerializer = {it.toString()}
 
-    TestSubscriber<String> metadataChannel = new TestSubscriber<>()
-    TestSubscriber<PreResponse> resultsChannel = new TestSubscriber<>()
-    TestSubscriber<String> preResponseStoredSubscriber = new TestSubscriber<>()
-    TestSubscriber<JobRow> jobRowUpdatedSubscriber = new TestSubscriber<>()
+    TestObserver<String> metadataChannel = new TestObserver<>()
+    TestObserver<PreResponse> resultsChannel = new TestObserver<>()
+    TestObserver<String> preResponseStoredSubscriber = new TestObserver<>()
+    TestObserver<JobRow> jobRowUpdatedSubscriber = new TestObserver<>()
 
     @Shared ResponseException exception = new ResponseException(
             404,

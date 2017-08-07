@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 
 import io.reactivex.Observable
-import io.reactivex.subscribers.TestSubscriber
+import io.reactivex.observers.TestObserver
 import io.reactivex.subjects.PublishSubject
 import spock.lang.Specification
 import spock.lang.Timeout
@@ -88,7 +88,7 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
 
     def "getResults emits a PreResponse if it is available in the PreResponseStore even if the notification for the ticket is missed"() {
         setup:
-        TestSubscriber<PreResponse> testSubscriber = new TestSubscriber<>()
+        TestObserver<PreResponse> testSubscriber = new TestObserver<>()
         JobsApiRequest apiRequest = new JobsApiRequest(
                 null,
                 null,
@@ -101,19 +101,19 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
         )
 
         when: "PreResponse is stored in the PreResponsestore and then a notification is fired by BroadcastChannel"
-        preResponseStore.save("ticket0", PreResponseTestingUtils.buildPreResponse("2016-04-20")).toBlocking().first()
+        preResponseStore.save("ticket0", PreResponseTestingUtils.buildPreResponse("2016-04-20")).blockingFirst()
         broadcastChannel.publish("ticket0")
 
         and: "We then subscribe to the reactive chain after the notification has already been fired"
         jobsServlet.getResults("ticket0", apiRequest.asyncAfter).subscribe(testSubscriber)
 
         then: "getResults returns the expected PreResponse"
-        testSubscriber.assertReceivedOnNext([PreResponseTestingUtils.buildPreResponse("2016-04-20")])
+        testSubscriber.assertResult(PreResponseTestingUtils.buildPreResponse("2016-04-20"))
     }
 
     def "getResults returns a preResponseObservable if it is available in the PreResponseStore even if the notification for the ticket is not received before the async timeout"() {
         setup:
-        TestSubscriber<PreResponse> testSubscriber = new TestSubscriber<>()
+        TestObserver<PreResponse> testObserver = new TestObserver<>()
         JobsApiRequest apiRequest = new JobsApiRequest(
                 null,
                 null,
@@ -129,15 +129,15 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
         preResponseStore.save("ticket1", PreResponseTestingUtils.buildPreResponse("2016-04-21")).subscribe()
 
         and: "We then subscribe to the reactive chain"
-        jobsServlet.getResults("ticket1", apiRequest.asyncAfter).subscribe(testSubscriber)
+        jobsServlet.getResults("ticket1", apiRequest.asyncAfter).subscribe(testObserver)
 
         then: "getResults returns the expected PreResponse"
-        testSubscriber.assertReceivedOnNext([PreResponseTestingUtils.buildPreResponse("2016-04-21")])
+        testObserver.assertResult(PreResponseTestingUtils.buildPreResponse("2016-04-21"))
     }
 
     def "getResults returns a PreResponseObservable even if the PreResponse is not available in the PreResponseStore initially but a notification is received from the broadcastChannel before the async timeout"() {
         setup:
-        TestSubscriber<PreResponse> testSubscriber = new TestSubscriber<>()
+        TestObserver<PreResponse> testSubscriber = new TestObserver<>()
         JobsApiRequest apiRequest = new JobsApiRequest(
                 null,
                 null,
@@ -162,12 +162,12 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
         broadcastChannel.publish("ticket2")
 
         then: "getResults returns the expected PreResponse"
-        testSubscriber.assertReceivedOnNext([PreResponseTestingUtils.buildPreResponse("2016-04-22")])
+        testSubscriber.assertResult(PreResponseTestingUtils.buildPreResponse("2016-04-22"))
     }
 
     def "getResults returns an empty observable if the PreResponse is not available in the PreResponseStore before the async timeout"() {
         setup:
-        TestSubscriber<PreResponse> testSubscriber = new TestSubscriber<>()
+        TestObserver<PreResponse> testSubscriber = new TestObserver<>()
         JobsApiRequest apiRequest = new JobsApiRequest(null, "5", "", "", null, uriInfo, jobPayloadBuilder, apiJobStore)
 
         when: "we start the async chain"
@@ -177,7 +177,7 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
         then: "getResults returns an empty observable"
         testSubscriber.awaitTerminalEvent()
         testSubscriber.assertNoErrors()
-        testSubscriber.assertCompleted()
+        testSubscriber.assertComplete()
         testSubscriber.assertNoValues()
     }
 
@@ -224,7 +224,7 @@ class JobsServletReactiveChainforResultsEndpointSpec extends Specification {
         )
 
         and:
-        TestSubscriber resultsSubscriber = new TestSubscriber()
+        TestObserver resultsSubscriber = new TestObserver()
 
         and:
         jobsServlet.getResults("ticket1", apiRequest.asyncAfter).subscribe(resultsSubscriber)

@@ -10,7 +10,7 @@ import com.yahoo.bard.webservice.async.jobs.jobrows.JobRow
 import com.yahoo.bard.webservice.util.ReactiveTestUtils
 import com.yahoo.bard.webservice.web.FilterOperation
 
-import io.reactivex.subscribers.TestSubscriber
+import io.reactivex.observers.TestObserver
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -88,13 +88,13 @@ class HashJobStoreSpec extends ApiJobStoreSpec {
     @Unroll
     def "getFilteredRows returns #jobRows that satisfy #filters"() {
         setup:
-        TestSubscriber<JobRow> testSubscriber = new TestSubscriber<>()
+        TestObserver<JobRow> testSubscriber = new TestObserver<>()
 
         when:
         hashJobStore.getFilteredRows(filters as Set).subscribe(testSubscriber)
 
         then:
-        testSubscriber.assertReceivedOnNext(jobRows)
+        testSubscriber.assertResult(jobRows)
 
         where:
         filters                          | jobRows
@@ -113,13 +113,13 @@ class HashJobStoreSpec extends ApiJobStoreSpec {
         hashJobStore.save(jobRowWithoutUserId)
 
         JobRowFilter jobRowFilter = new JobRowFilter(USER_ID, FilterOperation.eq, ["Foo"] as Set)
-        TestSubscriber<JobRow> testSubscriber = new TestSubscriber<>()
+        TestObserver<JobRow> testSubscriber = new TestObserver<>()
 
         when:
         hashJobStore.getFilteredRows([jobRowFilter] as Set).subscribe(testSubscriber)
 
         then:
         testSubscriber.assertError(IllegalArgumentException.class)
-        testSubscriber.getOnErrorEvents().get(0).getMessage() == "Filter field 'userId' does not exist. The possible fields to filter on are '[jobTicket]'"
+        testSubscriber.assertErrorMessage("Filter field 'userId' does not exist. The possible fields to filter on are '[jobTicket]'")
     }
 }
