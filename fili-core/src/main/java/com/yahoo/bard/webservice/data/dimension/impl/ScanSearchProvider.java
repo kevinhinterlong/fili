@@ -315,6 +315,21 @@ public class ScanSearchProvider implements SearchProvider, FilterDimensionRows {
     }
 
     @Override
+    public TreeSet<DimensionRow> regexFilterOperation(TreeSet<DimensionRow> dimensionRows, ApiFilter filter) {
+        TreeSet<DimensionRow> filteredDimensionRows = new TreeSet<>();
+
+        for (DimensionRow dimensionRow : dimensionRows) {
+            String value = dimensionRow.get(filter.getDimensionField());
+            filter.getValues().forEach(regexFilter -> {
+                if (value.matches(regexFilter)) {
+                    filteredDimensionRows.add(dimensionRow);
+                }
+            });
+        }
+        return filteredDimensionRows;
+    }
+
+    @Override
     public Pagination<DimensionRow> findAllDimensionRowsPaged(PaginationParameters paginationParameters) {
         return new SinglePagePagination<>(
                 Collections.unmodifiableList(
@@ -440,6 +455,9 @@ public class ScanSearchProvider implements SearchProvider, FilterDimensionRows {
                     break;
                 case contains:
                     dimensionRows = containsFilterOperation(dimensionRows, filter);
+                    break;
+                case regex:
+                    dimensionRows = regexFilterOperation(dimensionRows, filter);
                     break;
                 default:
                     LOG.error("Illegal Filter operation : {}", filter.getOperation());

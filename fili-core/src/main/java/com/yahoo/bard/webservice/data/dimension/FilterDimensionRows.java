@@ -50,4 +50,14 @@ public interface FilterDimensionRows {
      * @return Tree set of DimensionRows
      */
     TreeSet<DimensionRow> containsFilterOperation(TreeSet<DimensionRow> dimensionRows, ApiFilter filter);
+
+    /**
+     * Regular expression filter operation.
+     *
+     * @param dimensionRows  The unfiltered set of dimension rows
+     * @param filter  The api filter to be applied to the dimension rows
+     *
+     * @return Tree set of DimensionRows
+     */
+    TreeSet<DimensionRow> regexFilterOperation(TreeSet<DimensionRow> dimensionRows, ApiFilter filter);
 }

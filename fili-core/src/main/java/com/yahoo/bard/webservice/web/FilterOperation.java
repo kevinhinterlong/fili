@@ -10,5 +10,6 @@ public enum FilterOperation {
     notin,
     startswith,
     contains,
+    regex,
     eq
 }

@@ -259,6 +259,24 @@ abstract class SearchProviderSpec<T extends SearchProvider> extends Specificatio
         searchProvider.findFilteredDimensionRowsPaged(filters, new PaginationParameters(1, 1)).getPageOfData() == new ArrayList<>(expectedRows)
     }
 
+    def "A filter query with 'regex' filters on different fields returns a non-empty subset"() {
+        given:
+        Set<ApiFilter> filters = [
+                buildFilter("animal|id-regex[chimpanzee,spidermonkey,tarantula]"),
+                buildFilter('animal|desc-regex["M.+ have teeth"]')
+        ]
+
+        and:
+        TreeSet<DimensionRow> expectedRows = [
+                makeDimensionRow(keyValueStoreDimension, "chimpanzee", "Monkeys have teeth"),
+                makeDimensionRow(keyValueStoreDimension, "spidermonkey", "Monkeys have teeth")
+        ] as TreeSet
+
+        expect:
+        searchProvider.findFilteredDimensionRows(filters) == expectedRows
+        searchProvider.findFilteredDimensionRowsPaged(filters, new PaginationParameters(2, 1)).getPageOfData() == new ArrayList<>(expectedRows)
+    }
+
     def "A filter query with 'in' filters on different fields returns a non-empty subset"() {
         given:
         Set<ApiFilter> filters = [

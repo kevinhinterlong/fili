@@ -36,6 +36,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TimeLimitingCollector;
@@ -470,6 +471,22 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     /**
+     * Regex filter operation.
+     *
+     * @param luceneFieldName  Name of the lucene field to filter on
+     * @param filter  New filter to add to the query
+     *
+     * @return A builder that knows how to build the appropriate BooleanQuery
+     */
+    private BooleanQuery regexFilterQuery(String luceneFieldName, ApiFilter filter) {
+        return filter.getValues().stream()
+                .map(value -> new Term(luceneFieldName, value))
+                .map(RegexpQuery::new)
+                .collect(getBooleanQueryCollector(BooleanClause.Occur.SHOULD))
+                .build();
+    }
+
+    /**
      * Get query with filter parameters.
      *
      * @param filters  The set of filters
@@ -526,6 +543,10 @@ public class LuceneSearchProvider implements SearchProvider {
                     break;
                 case contains:
                     filterQueryBuilder.add(containsFilterQuery(luceneFieldName, filter), BooleanClause.Occur.MUST);
+                    hasPositive = true;
+                    break;
+                case regex:
+                    filterQueryBuilder.add(regexFilterQuery(luceneFieldName, filter), BooleanClause.Occur.MUST);
                     hasPositive = true;
                     break;
                 default:

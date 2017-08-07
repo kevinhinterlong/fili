@@ -17,6 +17,7 @@ import rx.Observable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * An ApiJobStore backed by an in-memory map. This is meant as a stub implementation for
@@ -116,6 +117,9 @@ public class HashJobStore implements ApiJobStore {
                 return filterValues.stream().anyMatch(actualValue::startsWith);
             case contains :
                 return filterValues.stream().anyMatch(actualValue::contains);
+            case regex:
+                Pattern pattern = Pattern.compile(actualValue);
+                return filterValues.stream().anyMatch(value -> pattern.matcher(value).matches());
             case in: // the fall-through is intentional because in is a synonym for eq
             case eq:
                 return filterValues.contains(actualValue);
