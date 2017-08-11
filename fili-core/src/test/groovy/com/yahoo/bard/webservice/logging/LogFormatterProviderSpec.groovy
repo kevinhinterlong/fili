@@ -13,7 +13,6 @@ import spock.lang.Specification
 class LogFormatterProviderSpec extends Specification {
 
     @Shared LogFormatter originalLogFormatter
-    String originalLogFormatterClassName
     SystemConfig systemConfig = SystemConfigProvider.instance;
     String logFormatterKey = systemConfig.getPackageVariableName(LOG_FORMATTER_IMPLEMENTATION_SETTING_NAME)
 

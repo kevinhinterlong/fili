@@ -2,14 +2,9 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.web.handlers.workflow
 
-import static com.yahoo.bard.webservice.config.BardFeatureFlag.DRUID_CACHE
-import static com.yahoo.bard.webservice.config.BardFeatureFlag.DRUID_CACHE_V2
 import static com.yahoo.bard.webservice.config.BardFeatureFlag.QUERY_SPLIT
-import static com.yahoo.bard.webservice.config.CacheFeatureFlag.ETAG
-import static com.yahoo.bard.webservice.config.CacheFeatureFlag.LOCAL_SIGNATURE
-import static com.yahoo.bard.webservice.config.CacheFeatureFlag.NONE
-import static com.yahoo.bard.webservice.config.CacheFeatureFlag.TTL
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.data.PartialDataHandler
@@ -38,8 +33,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 
 import spock.lang.Specification
 
-import javax.management.StringValueExp
-
+@ModifiesSettings
 class DruidWorkflowSpec extends Specification {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new Jdk8Module().configureAbsentsAsNulls(false))
@@ -60,8 +54,8 @@ class DruidWorkflowSpec extends Specification {
     QuerySigningService<Long> querySigningService = Mock(SegmentIntervalsHashIdGenerator)
     VolatileIntervalsService volatileIntervalsService = Mock(VolatileIntervalsService)
 
-    SystemConfig systemConfig
-    String uncoveredKey
+    SystemConfig systemConfig = SystemConfigProvider.getInstance()
+    String uncoveredKey = SYSTEM_CONFIG.getPackageVariableName("druid_uncovered_interval_limit")
 
     String queryResponseCachingStrategy
 
@@ -70,18 +64,11 @@ class DruidWorkflowSpec extends Specification {
         queryResponseCachingStrategy = SYSTEM_CONFIG.getStringProperty(ETAG_CACHE_CONFIG_KEY, "NoCache")
 
         splittingStatus = QUERY_SPLIT.isOn()
-        systemConfig = SystemConfigProvider.getInstance()
-        uncoveredKey = SYSTEM_CONFIG.getPackageVariableName("druid_uncovered_interval_limit")
     }
 
     def cleanup() {
-        SYSTEM_CONFIG.clearProperty(TTL_CACHE_CONFIG_KEY)
-        SYSTEM_CONFIG.clearProperty(LOCAL_SIGNATURE_CACHE_CONFIG_KEY)
-        SYSTEM_CONFIG.clearProperty(ETAG_CACHE_CONFIG_KEY)
         QUERY_SPLIT.setOn(splittingStatus)
 
-        // restore config value
-        SYSTEM_CONFIG.setProperty(ETAG_CACHE_CONFIG_KEY, queryResponseCachingStrategy)
     }
 
     def "Test workflow config controls workflow stages"() {

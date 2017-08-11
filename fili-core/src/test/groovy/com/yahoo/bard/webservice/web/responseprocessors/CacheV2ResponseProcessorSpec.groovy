@@ -6,6 +6,7 @@ import static com.yahoo.bard.webservice.async.ResponseContextUtils.createRespons
 import static com.yahoo.bard.webservice.web.responseprocessors.ResponseContextKeys.MISSING_INTERVALS_CONTEXT_KEY
 import static com.yahoo.bard.webservice.web.responseprocessors.ResponseContextKeys.VOLATILE_INTERVALS_CONTEXT_KEY
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.data.cache.TupleDataCache
@@ -29,6 +30,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+@ModifiesSettings
 class CacheV2ResponseProcessorSpec extends Specification {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new Jdk8Module().configureAbsentsAsNulls(false))
@@ -167,7 +169,6 @@ class CacheV2ResponseProcessorSpec extends Specification {
 
         and: "A very small max-length-to-cache"
         long smallMaxLength = 1L
-        SYSTEM_CONFIG.resetProperty(max_druid_response_length_to_cache_key, smallMaxLength.toString())
 
         and: "A workable response context"
         next.getResponseContext() >> responseContext
@@ -184,9 +185,6 @@ class CacheV2ResponseProcessorSpec extends Specification {
         then: "Set is never called on the cache and the next handler is called"
         1 * next.processResponse(json, groupByQuery, null)
         0 * dataCache.set(*_)
-
-        cleanup: "Restore the original setting for max-length-to-cache"
-        SYSTEM_CONFIG.resetProperty(max_druid_response_length_to_cache_key, oldMaxLength.toString())
     }
 
     def "Test proxy calls"() {

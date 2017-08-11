@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.web.endpoints
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.application.JerseyTestBinder
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
@@ -13,11 +14,14 @@ import com.yahoo.bard.webservice.util.GroovyTestUtils
 import spock.lang.Specification
 import spock.lang.Timeout
 import spock.lang.Unroll
+import spock.util.environment.RestoreSystemProperties
 
 import javax.ws.rs.core.Response
 
 @Timeout(30)
 // Fail test if hangs
+@ModifiesSettings
+@RestoreSystemProperties
 class DataServletTimezoneSpec extends Specification {
 
     static SystemConfig systemConfig = SystemConfigProvider.getInstance()
@@ -35,7 +39,6 @@ class DataServletTimezoneSpec extends Specification {
     DruidWebService testWebService
     DruidWebService testMetadataWebService
 
-    static String systemTimeZone
     static String timeZonePropertyName = systemConfig.getPackageVariableName("timezone")
 
     String expectedDruidQueryFormat =
@@ -63,25 +66,14 @@ class DataServletTimezoneSpec extends Specification {
     def setupSpec() {
         // Intercept Druid requests with StubDruidServlet
         System.setProperty(DRUID_URL_SETTING, "http://localhost:9998/druid")
-        systemTimeZone = systemConfig.getStringProperty(timeZonePropertyName, "UTC")
         originalContextPropertyValue = System.getProperty(contextKey)
     }
 
     def cleanup() {
         // Release the test web container
-        systemConfig.setProperty(timeZonePropertyName, systemTimeZone)
         if (jtb != null) {
             jtb.tearDown()
         }
-        if (originalContextPropertyValue == null) {
-            System.clearProperty(contextKey)
-        } else {
-            System.setProperty(contextKey, originalContextPropertyValue)
-        }
-    }
-
-    def cleanupSpec() {
-        System.getProperties().remove(DRUID_URL_SETTING)
     }
 
     def startJerseyTestBinder() {

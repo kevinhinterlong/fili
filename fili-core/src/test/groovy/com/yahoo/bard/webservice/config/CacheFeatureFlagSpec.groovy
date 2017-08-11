@@ -4,9 +4,12 @@ package com.yahoo.bard.webservice.config
 
 import static com.yahoo.bard.webservice.config.CacheFeatureFlag.*
 
+import com.yahoo.bard.testing.ModifiesSettings
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
+@ModifiesSettings
 class CacheFeatureFlagSpec extends Specification {
     private static final SystemConfig SYSTEM_CONFIG = SystemConfigProvider.getInstance()
     private static final String TTL_CACHE_CONFIG_KEY = SYSTEM_CONFIG.getPackageVariableName("druid_cache_enabled")
@@ -18,15 +21,6 @@ class CacheFeatureFlagSpec extends Specification {
     def setup() {
         // store config value
         queryResponseCachingStrategy = SYSTEM_CONFIG.getStringProperty(ETAG_CACHE_CONFIG_KEY, "NoCache")
-    }
-
-    def cleanup() {
-        SYSTEM_CONFIG.clearProperty(TTL_CACHE_CONFIG_KEY)
-        SYSTEM_CONFIG.clearProperty(LOCAL_SIGNATURE_CACHE_CONFIG_KEY)
-        SYSTEM_CONFIG.clearProperty(ETAG_CACHE_CONFIG_KEY)
-
-        // restore config value
-        SYSTEM_CONFIG.setProperty(ETAG_CACHE_CONFIG_KEY, queryResponseCachingStrategy)
     }
 
     @Unroll
@@ -42,10 +36,6 @@ class CacheFeatureFlagSpec extends Specification {
         badValues.each {
             assert ! it.isOn()
         }
-
-        cleanup:
-        SYSTEM_CONFIG.clearProperty(TTL_CACHE_CONFIG_KEY)
-        SYSTEM_CONFIG.clearProperty(LOCAL_SIGNATURE_CACHE_CONFIG_KEY)
 
         where:
         ttlIsOn | localSignatureIsOn | NoCacheOn | expected

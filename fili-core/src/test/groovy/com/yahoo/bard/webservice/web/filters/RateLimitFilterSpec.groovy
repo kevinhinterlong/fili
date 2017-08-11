@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.web.filters
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.application.JerseyTestBinder
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /* Do not test on Jenkins since URL requests are inconsistent */
 @Timeout(30)    // Fail test if hangs
 @IgnoreIf({System.getenv("BUILD_NUMBER") != null})
+@ModifiesSettings
 class RateLimitFilterSpec extends Specification {
     static final int LIMIT_GLOBAL = 20
     static final int LIMIT_PER_USER = 10
@@ -27,20 +29,10 @@ class RateLimitFilterSpec extends Specification {
     static SystemConfig systemConfig = SystemConfigProvider.getInstance()
     static JerseyTestBinder jtb
 
-    def static originalGlobalLimit
-    def static originalUserLimit
-    def static originalUiLimit
-
     static void setDefaults() {
-        originalGlobalLimit = systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_GLOBAL_KEY, LIMIT_GLOBAL as String)
-        originalUserLimit = systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_PER_USER_KEY, LIMIT_PER_USER as String)
-        originalUiLimit = systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_UI_KEY, LIMIT_UI as String)
-    }
-
-    static void clearDefaults() {
-        systemConfig.resetProperty(RateLimiter.REQUEST_LIMIT_GLOBAL_KEY, originalGlobalLimit)
-        systemConfig.resetProperty(RateLimiter.REQUEST_LIMIT_PER_USER_KEY, originalUserLimit)
-        systemConfig.resetProperty(RateLimiter.REQUEST_LIMIT_UI_KEY, originalUiLimit)
+        systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_GLOBAL_KEY, LIMIT_GLOBAL as String)
+        systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_PER_USER_KEY, LIMIT_PER_USER as String)
+        systemConfig.setProperty(RateLimiter.REQUEST_LIMIT_UI_KEY, LIMIT_UI as String)
     }
 
     def setupSpec() {
@@ -67,7 +59,6 @@ class RateLimitFilterSpec extends Specification {
     def cleanupSpec() {
         jtb.tearDown()
         TestRateLimitFilter.instance = null
-        clearDefaults()
     }
 
     // Multi-threaded Access

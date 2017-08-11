@@ -58,6 +58,13 @@ public class SettingsRestorer extends AbstractAnnotationDrivenExtension<Modifies
 
             });
 
+            //            // restore old value
+            //            if (systemConfig != null) {
+            //                LOG.info("{} finished. Restoring original SystemConfig {}", spec
+            //                        .getFilename(), systemConfig);
+            //                field.set(null, systemConfig);
+            //            }
+
         } catch (IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }

@@ -2,15 +2,10 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.web.handlers
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
-import com.yahoo.bard.webservice.druid.model.datasource.DataSource
-import com.yahoo.bard.webservice.druid.model.filter.Filter
-import com.yahoo.bard.webservice.druid.model.having.Having
-import com.yahoo.bard.webservice.druid.model.orderby.LimitSpec
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery
-import com.yahoo.bard.webservice.druid.model.query.Granularity
-import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.druid.model.query.QueryContext
 import com.yahoo.bard.webservice.web.DataApiRequest
 import com.yahoo.bard.webservice.web.responseprocessors.DruidPartialDataResponseProcessor
@@ -18,6 +13,7 @@ import com.yahoo.bard.webservice.web.responseprocessors.ResponseProcessor
 
 import spock.lang.Specification
 
+@ModifiesSettings
 class DruidPartialDataRequestHandlerSpec extends Specification {
     private static final SystemConfig SYSTEM_CONFIG = SystemConfigProvider.getInstance();
 
@@ -47,8 +43,5 @@ class DruidPartialDataRequestHandlerSpec extends Specification {
         1 * druidQuery.withContext(queryContext) >> druidQuery
         1 * queryContext.withUncoveredIntervalsLimit(10) >> queryContext
         1 * nextHandler.handleRequest(requestContext, apiRequest, druidQuery, _ as DruidPartialDataResponseProcessor)
-
-        cleanup:
-        systemConfig.clearProperty(uncoveredKey)
     }
 }

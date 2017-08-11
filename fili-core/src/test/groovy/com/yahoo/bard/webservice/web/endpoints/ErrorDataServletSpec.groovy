@@ -24,6 +24,7 @@ import static com.yahoo.bard.webservice.web.ErrorMessageFormat.TABLE_UNDEFINED
 import static com.yahoo.bard.webservice.web.ErrorMessageFormat.UNKNOWN_GRANULARITY
 import static com.yahoo.bard.webservice.web.ErrorMessageFormat.DATE_TIME_SORT_VALUE_INVALID
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.application.JerseyTestBinder
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigException
@@ -45,6 +46,7 @@ import spock.lang.Timeout
 import javax.ws.rs.core.Response
 
 @Timeout(30)    // Fail test if hangs
+@ModifiesSettings
 class ErrorDataServletSpec extends Specification {
 
     private static final SystemConfig systemConfig = SystemConfigProvider.getInstance()
@@ -52,7 +54,6 @@ class ErrorDataServletSpec extends Specification {
     private static final String DRUID_URL_SETTING = systemConfig.getPackageVariableName("non_ui_druid_broker")
 
     @Shared boolean topNStatus
-    static String saveDruidURL
     JerseyTestBinder jtb = new JerseyTestBinder(DataServlet.class)
     JsonSlurper jsonSlurper = new JsonSlurper()
     TestDruidWebService uiTestWebService
@@ -96,29 +97,13 @@ class ErrorDataServletSpec extends Specification {
 """
 
     def setupSpec() {
-        // Stash the druid URL set in the properties so we can replace it when we're done
-        try {
-            saveDruidURL = systemConfig.getStringProperty(DRUID_URL_SETTING)
-        } catch (SystemConfigException ignored) {
-            saveDruidURL = null
-        }
-
-        // If there's no URL property set, set the property to a test URL
-        if (saveDruidURL == null) {
-            systemConfig.setProperty(DRUID_URL_SETTING, "http://localhost:9998/druid")
-        }
+        systemConfig.setProperty(DRUID_URL_SETTING, "http://localhost:9998/druid")
 
         topNStatus = TOP_N.isOn();
         TOP_N.setOn(true)
     }
 
     def cleanupSpec() {
-        if (saveDruidURL == null) {
-            systemConfig.clearProperty(DRUID_URL_SETTING)
-        } else {
-            systemConfig.setProperty(DRUID_URL_SETTING, saveDruidURL)
-        }
-
         TOP_N.setOn(topNStatus)
     }
 
