@@ -2,12 +2,14 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.druid.client
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 
 import spock.lang.Shared
 import spock.lang.Specification
 
+@ModifiesSettings
 class DruidClientConfigHelperSpec extends Specification {
 
     private static final SystemConfig systemConfig = SystemConfigProvider.getInstance()
@@ -32,8 +34,6 @@ class DruidClientConfigHelperSpec extends Specification {
 
     @Shared def uiUrl
     @Shared def nonUiUrl
-    @Shared def uiRequestTimeout
-    @Shared def nonUiRequestTimeout
 
     def setupSpec() {
         uiUrl = systemConfig.getStringProperty(UI_URL_SETTING_KEY)
@@ -41,41 +41,18 @@ class DruidClientConfigHelperSpec extends Specification {
         assert uiUrl != null : "Property: " + UI_URL_SETTING_KEY
         assert nonUiUrl != null : "Property: " + NON_UI_URL_SETTING_KEY
 
-        uiRequestTimeout = systemConfig.getStringProperty(UI_DRUID_REQUEST_TIMEOUT_KEY, null)
+        def uiRequestTimeout = systemConfig.getStringProperty(UI_DRUID_REQUEST_TIMEOUT_KEY, null)
         if (uiRequestTimeout == null) {
             systemConfig.setProperty(UI_DRUID_REQUEST_TIMEOUT_KEY, expectedUiRequestTimeout)
         }
 
-        nonUiRequestTimeout = systemConfig.getStringProperty(NON_UI_DRUID_REQUEST_TIMEOUT_KEY, null)
+        def nonUiRequestTimeout = systemConfig.getStringProperty(NON_UI_DRUID_REQUEST_TIMEOUT_KEY, null)
         if (nonUiRequestTimeout == null) {
             systemConfig.setProperty(NON_UI_DRUID_REQUEST_TIMEOUT_KEY, expectedNonUiRequestTimeout)
         }
     }
 
     def cleanupSpec() {
-        if (uiUrl == null) {
-            systemConfig.clearProperty(UI_URL_SETTING_KEY)
-        } else {
-            systemConfig.setProperty(UI_URL_SETTING_KEY , uiUrl)
-        }
-
-        if (nonUiUrl == null) {
-            systemConfig.clearProperty(NON_UI_URL_SETTING_KEY)
-        } else {
-            systemConfig.setProperty(NON_UI_URL_SETTING_KEY , nonUiUrl)
-        }
-
-        if (uiRequestTimeout == null) {
-            systemConfig.clearProperty(UI_DRUID_REQUEST_TIMEOUT_KEY)
-        } else {
-            systemConfig.setProperty(UI_DRUID_REQUEST_TIMEOUT_KEY , uiRequestTimeout)
-        }
-
-        if (nonUiRequestTimeout == null) {
-            systemConfig.clearProperty(NON_UI_DRUID_REQUEST_TIMEOUT_KEY)
-        } else {
-            systemConfig.setProperty(NON_UI_DRUID_REQUEST_TIMEOUT_KEY , nonUiRequestTimeout)
-        }
     }
 
     def "check if appropriate UI druid broker url is fetched"() {

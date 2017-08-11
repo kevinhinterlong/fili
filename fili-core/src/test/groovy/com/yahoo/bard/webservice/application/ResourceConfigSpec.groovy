@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.application
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.web.filters.BardLoggingFilter
@@ -21,6 +22,7 @@ import java.util.function.Consumer
 /**
  * Test that the resource configuration correctly registers all filters correctly
  */
+@ModifiesSettings
 public class ResourceConfigSpec extends Specification {
 
     private static final SystemConfig SYSTEM_CONFIG = SystemConfigProvider.getInstance()
@@ -48,7 +50,6 @@ public class ResourceConfigSpec extends Specification {
     def cleanup() {
         binder = null
         clicker = null
-        SYSTEM_CONFIG.clearProperty(BINDER_KEY)
     }
 
     static Binder getBinder() {

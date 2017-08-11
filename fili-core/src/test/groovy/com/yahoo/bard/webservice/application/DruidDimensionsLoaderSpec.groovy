@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.application
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.config.SystemConfig
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.data.config.names.TestApiDimensionName
@@ -24,6 +25,7 @@ import org.joda.time.DateTime
 
 import spock.lang.Specification
 
+@ModifiesSettings
 class DruidDimensionsLoaderSpec extends Specification {
 
     static final ObjectMapper MAPPER = new ObjectMapper()
@@ -40,17 +42,11 @@ class DruidDimensionsLoaderSpec extends Specification {
     SystemConfig systemConfig = SystemConfigProvider.getInstance()
 
     DruidDimensionsLoader loader
-    String druidDimLoaderDimensions
     DruidWebService druidWebService
     DimensionDictionary dimensionDictionary
     JerseyTestBinder jtb
 
     def setup() {
-        SystemConfig systemConfig = SystemConfigProvider.getInstance()
-        druidDimLoaderDimensions = systemConfig.getStringProperty(
-                DruidDimensionsLoader.DRUID_DIM_LOADER_DIMENSIONS,
-                null
-        )
         systemConfig.setProperty(
                 DruidDimensionsLoader.DRUID_DIM_LOADER_DIMENSIONS,
                 LOADED_DIMENSIONS.join(',')
@@ -66,11 +62,6 @@ class DruidDimensionsLoaderSpec extends Specification {
 
     def cleanup() {
         jtb.tearDown()
-        if (druidDimLoaderDimensions == null) {
-            systemConfig.clearProperty(DruidDimensionsLoader.DRUID_DIM_LOADER_DIMENSIONS)
-        } else {
-            systemConfig.setProperty(DruidDimensionsLoader.DRUID_DIM_LOADER_DIMENSIONS, druidDimLoaderDimensions)
-        }
     }
 
     def "The DimensionLoader constructor successfully extracts the dimensions from a dimension dictionary"() {

@@ -17,12 +17,12 @@ import static com.yahoo.bard.webservice.druid.client.DruidClientConfigHelper.DRU
 import static com.yahoo.bard.webservice.druid.client.DruidClientConfigHelper.NON_UI_DRUID_BROKER_URL_KEY
 import static com.yahoo.bard.webservice.druid.client.DruidClientConfigHelper.UI_DRUID_BROKER_URL_KEY
 
+import com.yahoo.bard.testing.ModifiesSettings
 import com.yahoo.bard.webservice.application.healthchecks.AllDimensionsLoadedHealthCheck
 import com.yahoo.bard.webservice.application.healthchecks.DataSourceMetadataLoaderHealthCheck
 import com.yahoo.bard.webservice.application.healthchecks.DruidDimensionsLoaderHealthCheck
 import com.yahoo.bard.webservice.application.healthchecks.VersionHealthCheck
 import com.yahoo.bard.webservice.config.SystemConfig
-import com.yahoo.bard.webservice.config.SystemConfigException
 import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.data.cache.DataCache
 import com.yahoo.bard.webservice.data.cache.HashDataCache
@@ -55,6 +55,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
+@ModifiesSettings
 public class AbstractBinderFactorySpec extends Specification {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
@@ -76,10 +77,6 @@ public class AbstractBinderFactorySpec extends Specification {
     @Shared boolean cacheV2Status = DRUID_CACHE_V2.isOn()
     @Shared boolean coordinatorStatus = DRUID_COORDINATOR_METADATA.isOn()
 
-    String oldUiURL
-    String oldNonUiURL
-    String oldCoordURL
-
     def setupSpec() {
         registry = HealthCheckRegistryFactory.registry
     }
@@ -90,47 +87,20 @@ public class AbstractBinderFactorySpec extends Specification {
     def setup() {
         DRUID_CACHE.setOn(false)
         DRUID_COORDINATOR_METADATA.setOn(true)
-        try {
-            oldUiURL = systemConfig.getStringProperty(UI_DRUID_BROKER_URL_KEY)
-        } catch (SystemConfigException e) {
-            oldUiURL = null
-        }
+
         systemConfig.setProperty(UI_DRUID_BROKER_URL_KEY, "http://localhost:9998/uidruid")
-
-        try {
-            oldNonUiURL = systemConfig.getStringProperty(NON_UI_DRUID_BROKER_URL_KEY)
-        } catch (SystemConfigException e) {
-            oldNonUiURL = null
-        }
         systemConfig.setProperty(NON_UI_DRUID_BROKER_URL_KEY, "http://localhost:9998/nonuidruid")
-
-        try {
-            oldCoordURL = systemConfig.getStringProperty(DRUID_COORD_URL_KEY)
-        } catch (SystemConfigException e) {
-            oldCoordURL = null
-        }
         systemConfig.setProperty(DRUID_COORD_URL_KEY, "http://localhost:9998/coordinator")
 
         binderFactory = new TestBinderFactory()
     }
 
-    def propertyRestore(propertyName, propertyValue) {
-        if (propertyValue) {
-            systemConfig.setProperty(propertyName, propertyValue)
-        } else {
-            systemConfig.clearProperty(propertyName)
-        }
-    }
 
     def cleanup() {
-        systemConfig.clearProperty(DIMENSION_BACKEND_KEY)
         PARTIAL_DATA.setOn(partialDataStatus)
         DRUID_COORDINATOR_METADATA.setOn(coordinatorStatus)
         DRUID_CACHE.setOn(cacheStatus)
         DRUID_CACHE_V2.setOn(cacheV2Status)
-        propertyRestore(UI_DRUID_BROKER_URL_KEY, oldUiURL)
-        propertyRestore(NON_UI_DRUID_BROKER_URL_KEY, oldNonUiURL)
-        propertyRestore(DRUID_COORD_URL_KEY, oldCoordURL)
         binderFactory.shutdownLoaderScheduler()
         HealthCheckRegistryFactory.registry = registry
     }
