@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.EnumSet;
 import java.util.concurrent.ExecutionException;
 
@@ -39,48 +40,13 @@ public class WikiMain {
     private static final Logger LOG = LoggerFactory.getLogger(WikiMain.class);
 
     /**
-     * Makes the dimensions passthrough.
-     * <p>
-     * This method sends a lastUpdated date to each dimension in the dimension cache, allowing the health checks
-     * to pass without having to set up a proper dimension loader. For each dimension, d, the following query is
-     * sent to the /v1/cache/dimensions/d endpoint:
-     * {
-     *     "name": "d",
-     *     "lastUpdated": "2016-01-01"
-     * }
-     *
-     * @param port  The port through which we access the webservice
-     *
-     * @throws IOException If something goes terribly wrong when building the JSON or sending it
-     */
-    private static void markDimensionCacheHealthy(int port) throws IOException {
-        AsyncHttpClient asyncHttpClient = new DefaultAsyncHttpClient();
-        for (DimensionConfig dimensionConfig : new WikiDimensions().getAllDimensionConfigurations()) {
-            String dimension = dimensionConfig.getApiName();
-            BoundRequestBuilder boundRequestBuilder = asyncHttpClient.preparePost("http://localhost:" + port +
-                    "/v1/cache/dimensions/" + dimension)
-                    .addHeader("Content-type", "application/json")
-                    .setBody(
-                            String.format("{\n \"name\":\"%s\",\n \"lastUpdated\":\"2016-01-01\"\n}", dimension)
-                    );
-
-            ListenableFuture<Response> responseFuture = boundRequestBuilder.execute();
-            try {
-                Response response = responseFuture.get();
-                LOG.debug("Mark Dimension Cache Updated Response: ", response);
-            } catch (InterruptedException | ExecutionException e) {
-                LOG.warn("Failed while marking dimensions healthy", e);
-            }
-        }
-    }
-
-    /**
      * Run the Wikipedia application.
      *
      * @param args  command line arguments
      * @throws Exception if the server fails to start or crashes
      */
     public static void main(String[] args) throws Exception {
+        Connection connection = Database.initializeDatabase();
         int port = 9998;
 
         Server server = new Server(port);
@@ -120,7 +86,5 @@ public class WikiMain {
         servletContextHandler.addServlet(AdminServlet.class, "/*");
 
         server.start();
-
-        markDimensionCacheHealthy(port);
     }
 }

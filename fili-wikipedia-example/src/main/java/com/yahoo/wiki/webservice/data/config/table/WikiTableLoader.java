@@ -8,15 +8,19 @@ import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.HOUR;
 import com.yahoo.bard.webservice.data.config.ResourceDictionaries;
 import com.yahoo.bard.webservice.data.config.dimension.DimensionConfig;
 import com.yahoo.bard.webservice.data.config.names.ApiMetricName;
+import com.yahoo.bard.webservice.data.config.names.DataSourceName;
 import com.yahoo.bard.webservice.data.config.names.FieldName;
 import com.yahoo.bard.webservice.data.config.table.BaseTableLoader;
 import com.yahoo.bard.webservice.data.config.table.ConcretePhysicalTableDefinition;
+import com.yahoo.bard.webservice.data.config.table.ConcreteSqlPhysicalTableDefinition;
 import com.yahoo.bard.webservice.data.config.table.PhysicalTableDefinition;
 import com.yahoo.bard.webservice.druid.model.query.AllGranularity;
 import com.yahoo.bard.webservice.druid.model.query.Granularity;
+import com.yahoo.bard.webservice.metadata.DataSourceMetadata;
 import com.yahoo.bard.webservice.metadata.DataSourceMetadataService;
 import com.yahoo.bard.webservice.table.TableGroup;
 import com.yahoo.bard.webservice.util.Utils;
+import com.yahoo.wiki.webservice.application.Database;
 import com.yahoo.wiki.webservice.data.config.dimension.WikiDimensions;
 import com.yahoo.wiki.webservice.data.config.names.WikiApiDimensionConfigInfo;
 import com.yahoo.wiki.webservice.data.config.names.WikiApiMetricName;
@@ -26,6 +30,7 @@ import com.yahoo.wiki.webservice.data.config.names.WikiLogicalTableName;
 
 import org.joda.time.DateTimeZone;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
@@ -58,15 +63,27 @@ public class WikiTableLoader extends BaseTableLoader {
 
         WikiDimensions wikiDimensions = new WikiDimensions();
 
-        configureSample(wikiDimensions);
+        configureSample(wikiDimensions, metadataService);
     }
 
     /**
      * Set up the tables for this table loader.
      *
      * @param wikiDimensions  The dimensions to load into test tables.
+     * @param metadataService
      */
-    private void configureSample(WikiDimensions wikiDimensions) {
+    private void configureSample(
+            WikiDimensions wikiDimensions,
+            final DataSourceMetadataService metadataService
+    ) {
+        metadataService.update(
+                DataSourceName.of(WikiDruidTableName.WIKITICKER.asName()),
+                new DataSourceMetadata(
+                        WikiDruidTableName.WIKITICKER.asName(),
+                        Collections.emptyMap(),
+                        Collections.emptyList()
+                )
+        );
 
         // Dimensions
         Set<DimensionConfig> dimsBasefactDruidTableName = wikiDimensions.getDimensionConfigurationsByConfigInfo(
@@ -85,7 +102,9 @@ public class WikiTableLoader extends BaseTableLoader {
 
         // Physical Tables
         Set<PhysicalTableDefinition> samplePhysicalTableDefinition = Utils.asLinkedHashSet(
-                new ConcretePhysicalTableDefinition(
+                new ConcreteSqlPhysicalTableDefinition(
+                        Database.SCHEMA,
+                        Database.TIME,
                         WikiDruidTableName.WIKITICKER,
                         HOUR.buildZonedTimeGrain(DateTimeZone.UTC),
                         druidMetricNames.get(WikiLogicalTableName.WIKIPEDIA),
