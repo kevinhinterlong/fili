@@ -1,0 +1,6 @@
+
+description = 'Fili: Security Module'
+dependencies {
+  compile project(':fili-core')
+  testCompile project(path: ':fili-core', configuration: 'testArtifacts')
+}

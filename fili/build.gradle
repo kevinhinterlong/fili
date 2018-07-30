@@ -1,0 +1,5 @@
+
+description = 'Fili: Packaging Module'
+dependencies {
+  compile project(':fili-core')
+}

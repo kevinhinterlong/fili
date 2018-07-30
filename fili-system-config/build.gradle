@@ -1,0 +1,6 @@
+
+description = 'Fili: system configuration library'
+dependencies {
+    compile "commons-configuration:commons-configuration:1.10"
+    compile "org.springframework:spring-core:4.3.4.RELEASE"
+}

@@ -1,0 +1,6 @@
+
+description = 'Fili: Navi Module'
+dependencies {
+  compile project(':fili-core')
+  testCompile project(path: ':fili-core', configuration: 'testArtifacts')
+}

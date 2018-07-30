@@ -1,0 +1,16 @@
+apply plugin: 'war'
+
+description = 'Fili: Generic Example'
+dependencies {
+    compile project(':fili')
+    compile project(':fili-core')
+    def jerseyVersion = '2.24'
+    compile "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion"
+    compile "org.glassfish.jersey.core:jersey-common:$jerseyVersion"
+    compile "org.glassfish.jersey.core:jersey-server:$jerseyVersion"
+    compile "org.eclipse.jetty:jetty-servlet:9.2.5.v20141112"
+
+    testCompile project(path: ':fili-core', configuration: 'testArtifacts')
+    testCompile "org.glassfish.jersey.test-framework:jersey-test-framework-core:$jerseyVersion"
+    testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2:$jerseyVersion"
+}

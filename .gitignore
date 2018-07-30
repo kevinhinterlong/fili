@@ -14,6 +14,8 @@
 # Build artifacts get put in these folder. Never include build artifacts
 target
 out
+build
+.gradle
 
 # Ignore generated jars
 *-system-config-*.jar

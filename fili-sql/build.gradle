@@ -1,0 +1,7 @@
+description = 'Fili: Sql Module'
+dependencies {
+    compile project(':fili-core')
+    compile "org.apache.calcite:calcite-core:1.12.0"
+    testCompile project(path: ':fili-core', configuration: 'testArtifacts')
+    testCompile "com.h2database:h2:1.4.195"
+}

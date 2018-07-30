@@ -1,0 +1,18 @@
+rootProject.name = 'fili-parent-pom'
+include ':fili-system-config'
+include ':fili-core'
+include ':fili-navi'
+include ':fili-security'
+include ':fili'
+include ':fili-wikipedia-example'
+include ':fili-generic-example'
+include ':fili-sql'
+
+project(':fili-system-config').projectDir = "$rootDir/fili-system-config" as File
+project(':fili-core').projectDir = "$rootDir/fili-core" as File
+project(':fili-navi').projectDir = "$rootDir/fili-navi" as File
+project(':fili-security').projectDir = "$rootDir/fili-security" as File
+project(':fili').projectDir = "$rootDir/fili" as File
+project(':fili-wikipedia-example').projectDir = "$rootDir/fili-wikipedia-example" as File
+project(':fili-generic-example').projectDir = "$rootDir/fili-generic-example" as File
+project(':fili-sql').projectDir = "$rootDir/fili-sql" as File
