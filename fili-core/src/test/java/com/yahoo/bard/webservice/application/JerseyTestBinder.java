@@ -33,8 +33,6 @@ import com.yahoo.bard.webservice.web.filters.TestLogWrapperFilter;
 import com.codahale.metrics.jersey2.InstrumentedResourceMethodApplicationListener;
 import com.codahale.metrics.logback.InstrumentedAppender;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import org.glassfish.hk2.api.MultiException;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -42,7 +40,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -410,10 +407,7 @@ public class JerseyTestBinder {
      */
     protected void buildWebServices() {
         // Build an ObjectMapper for everyone to use, since they are heavy-weight
-        ObjectMapper mapper = new ObjectMapper();
-        JodaModule jodaModule = new JodaModule();
-        jodaModule.addSerializer(Interval.class, new ToStringSerializer());
-        mapper.registerModule(jodaModule);
+        ObjectMapper mapper = new ObjectMappersSuite().getMapper();
 
         // This alternate switched implementation approach is not really used anywhere, should be split off into a
         // separate subclass if needed

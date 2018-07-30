@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.database;
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite;
 import com.yahoo.bard.webservice.sql.helper.TimestampUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,7 @@ public class Database {
     public static final String DELTA = "delta";
     public static final String ID = "ID";
     public static final String METRO_CODE = "metroCode";
+    private static final ObjectMapper MAPPER = new ObjectMappersSuite().getMapper();
 
     /**
      * Gets an in memory database with the {@link WikitickerEntry} from the example data.
@@ -191,9 +193,8 @@ public class Database {
                             wikiData,
                             StandardCharsets.UTF_8
                     )).lines().collect(Collectors.toList());
-            ObjectMapper objectMapper = new ObjectMapper();
             for (String line : wikiDataLines) {
-                WikitickerEntry entry = objectMapper.readValue(line, WikitickerEntry.class);
+                WikitickerEntry entry = MAPPER.readValue(line, WikitickerEntry.class);
                 entries.add(entry);
             }
         }

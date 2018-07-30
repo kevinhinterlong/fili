@@ -1,4 +1,10 @@
 description = 'Fili: Core Libraries'
+
+configurations {
+    avroGeneration
+    testArtifacts
+}
+
 dependencies {
     compile project(':fili-system-config')
     def druidVersion = '0.3.8'
@@ -49,17 +55,33 @@ dependencies {
     compile "org.apache.commons:commons-lang3:3.5"
     compile "org.apache.commons:commons-collections4:4.1"
     compile "org.apache.avro:avro:1.8.1"
+
+    avroGeneration "org.apache.avro:avro-tools:1.7.1"
+
     testCompile "junit:junit:4.12"
     testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2:2.24"
 }
 
+task runAvroGeneragion(type: JavaExec) {
+    classpath configurations.avroGeneration
+
+    main = 'org.apache.avro.tool.Main'
+
+    def inputSchema = "$projectDir/src/test/resources/avroFilesTesting/sampleData.avsc"
+    def inputData = "$projectDir/src/test/resources/avroFilesTesting/sampleData.json"
+    def redirectDir = "$buildDir/avro/avroFilesTesting"
+    def redirect = new File("$redirectDir/sampleData.avro")
+    ant.delete(file:redirect.absolutePath)
+    ant.touch(file:redirect.absolutePath, mkdirs: true)
+    standardOutput = redirect.newOutputStream()
+    args = ['fromjson', '--schema-file', inputSchema, inputData]
+}
+
+compileGroovy.dependsOn runAvroGeneragion
+
 task packageTests(type: Jar) {
     from sourceSets.test.output
     classifier = 'tests'
-}
-
-configurations {
-    testArtifacts
 }
 
 artifacts {

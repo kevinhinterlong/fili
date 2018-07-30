@@ -4,7 +4,6 @@ package com.yahoo.bard.webservice.web.handlers
 
 import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.DAY
 
-import com.yahoo.bard.webservice.logging.blocks.BardQueryInfoUtils
 import com.yahoo.bard.webservice.application.ObjectMappersSuite
 import com.yahoo.bard.webservice.druid.client.DruidWebService
 import com.yahoo.bard.webservice.druid.client.FailureCallback
@@ -14,6 +13,7 @@ import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.druid.model.query.WeightEvaluationQuery
 import com.yahoo.bard.webservice.logging.blocks.BardQueryInfo
+import com.yahoo.bard.webservice.logging.blocks.BardQueryInfoUtils
 import com.yahoo.bard.webservice.web.apirequest.DataApiRequest
 import com.yahoo.bard.webservice.web.responseprocessors.ResponseProcessor
 import com.yahoo.bard.webservice.web.responseprocessors.WeightCheckResponseProcessor
@@ -239,7 +239,7 @@ class WeightCheckRequestHandlerSpec extends Specification {
         } ]
         """
         JsonParser parser = new JsonFactory().createParser(weightResponse)
-        JsonNode jsonResult = new ObjectMapper().readTree(parser)
+        JsonNode jsonResult = MAPPER.readTree(parser)
         HttpErrorCallback ec = Mock(HttpErrorCallback)
 
         expect:
@@ -278,7 +278,7 @@ class WeightCheckRequestHandlerSpec extends Specification {
         } ]
         """
         JsonParser parser = new JsonFactory().createParser(weightResponse)
-        JsonNode jsonResult = new ObjectMapper().readTree(parser)
+        JsonNode jsonResult = MAPPER.readTree(parser)
         FailureCallback fc = Mock(FailureCallback)
 
         expect:

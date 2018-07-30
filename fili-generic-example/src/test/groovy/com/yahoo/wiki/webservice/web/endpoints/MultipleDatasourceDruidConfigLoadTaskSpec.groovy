@@ -34,7 +34,7 @@ class MultipleDatasourceDruidConfigLoadTaskSpec extends Specification {
 
     def "Load Multiple datasources"() {
         when: "We query druid"
-        DruidNavigator druidNavigator = new DruidNavigator(druidWebService, new ObjectMapper())
+        DruidNavigator druidNavigator = new DruidNavigator(druidWebService, MAPPER)
 
         then: "What we expect"
         List<DataSourceConfiguration> tables = druidNavigator.get();

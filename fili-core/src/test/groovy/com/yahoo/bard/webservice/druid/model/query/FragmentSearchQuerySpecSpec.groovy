@@ -2,6 +2,8 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.druid.model.query
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite
+
 import com.fasterxml.jackson.databind.ObjectMapper
 
 import spock.lang.Specification
@@ -9,7 +11,7 @@ import spock.lang.Unroll
 
 class FragmentSearchQuerySpecSpec extends Specification {
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    static final ObjectMapper OBJECT_MAPPER = new ObjectMappersSuite().mapper
 
     @Unroll
     def "#caseSensitive spec on '#values' values serializes to '#expectedJson'"() {

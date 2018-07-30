@@ -29,7 +29,7 @@ class AvroDimensionRowParserSpec extends Specification {
         Set<DimensionRow> dimSet = [dimensionRow1, dimensionRow2] as Set
 
         expect:
-        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "target/avro/avroFilesTesting/sampleData.avro") == dimSet
+        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "build/avro/avroFilesTesting/sampleData.avro") == dimSet
     }
 
     def "Schema file containing all the dimension fields and data parses to expected rows, using consumer"() {
@@ -42,7 +42,7 @@ class AvroDimensionRowParserSpec extends Specification {
         Consumer<DimensionRow> rowConsumer = {actual.add(it)}
 
         when:
-        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "target/avro/avroFilesTesting/sampleData.avro", rowConsumer)
+        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "build/avro/avroFilesTesting/sampleData.avro", rowConsumer)
 
         then:
         actual == dimSet
@@ -53,7 +53,7 @@ class AvroDimensionRowParserSpec extends Specification {
         dimensionFields.add(BardDimensionField.FIELD1)
 
         when:
-        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "target/avro/avroFilesTesting/sampleData.avro")
+        avroDimensionRowParser.parseAvroFileDimensionRows(dimension, "build/avro/avroFilesTesting/sampleData.avro")
 
         then:
         IllegalArgumentException exception = thrown(IllegalArgumentException)

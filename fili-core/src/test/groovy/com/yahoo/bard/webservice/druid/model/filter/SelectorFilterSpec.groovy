@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.druid.model.filter
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite
 import com.yahoo.bard.webservice.data.dimension.impl.LookupDimension
 import com.yahoo.bard.webservice.druid.model.datasource.TableDataSource
 import com.yahoo.bard.webservice.druid.model.dimension.extractionfunction.ExtractionFunction
@@ -60,7 +61,7 @@ class SelectorFilterSpec extends Specification {
             """
 
     def setup() {
-        objectMapper = new ObjectMapper()
+        objectMapper = new ObjectMappersSuite().mapper
         dimension = Mock(LookupDimension)
         extractionFunction = new RegisteredLookupExtractionFunction("lookup", false, "none", false, false)
         TableDataSource dataSource = Mock(TableDataSource)

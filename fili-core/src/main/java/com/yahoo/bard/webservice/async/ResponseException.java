@@ -2,11 +2,11 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.async;
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite;
 import com.yahoo.bard.webservice.druid.model.query.DruidAggregationQuery;
 import com.yahoo.bard.webservice.druid.model.query.DruidQuery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 import org.slf4j.Logger;
@@ -133,7 +133,7 @@ public class ResponseException extends Exception {
             DruidQuery<?> druidQuery,
             Throwable cause
     ) {
-        this(statusCode, reason, description, druidQuery, cause, new ObjectMapper().writer());
+        this(statusCode, reason, description, druidQuery, cause, new ObjectMappersSuite().getMapper().writer());
     }
 
     /**

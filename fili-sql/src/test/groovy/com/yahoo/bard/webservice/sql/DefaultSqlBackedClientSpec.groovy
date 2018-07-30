@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.sql
 
+import static com.yahoo.bard.webservice.data.time.AllGranularity.INSTANCE
 import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.DAY
 import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.HOUR
 import static com.yahoo.bard.webservice.data.time.DefaultTimeGrain.MINUTE
@@ -22,7 +23,6 @@ import static com.yahoo.bard.webservice.database.Database.USER
 import static com.yahoo.bard.webservice.database.Database.WIKITICKER
 import static com.yahoo.bard.webservice.druid.model.orderby.SortDirection.ASC
 import static com.yahoo.bard.webservice.druid.model.orderby.SortDirection.DESC
-import static com.yahoo.bard.webservice.data.time.AllGranularity.INSTANCE
 import static com.yahoo.bard.webservice.sql.builders.Aggregator.longMax
 import static com.yahoo.bard.webservice.sql.builders.Aggregator.longMin
 import static com.yahoo.bard.webservice.sql.builders.Aggregator.longSum
@@ -46,12 +46,14 @@ import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.get
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.groupByQuery
 import static com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder.timeSeriesQuery
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite
 import com.yahoo.bard.webservice.data.DruidResponseParser
 import com.yahoo.bard.webservice.data.ResultSet
 import com.yahoo.bard.webservice.data.ResultSetSchema
 import com.yahoo.bard.webservice.data.dimension.DimensionColumn
 import com.yahoo.bard.webservice.data.metric.MetricColumn
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain
+import com.yahoo.bard.webservice.data.time.Granularity
 import com.yahoo.bard.webservice.database.Database
 import com.yahoo.bard.webservice.druid.model.DefaultQueryType
 import com.yahoo.bard.webservice.druid.model.aggregation.Aggregation
@@ -60,14 +62,12 @@ import com.yahoo.bard.webservice.druid.model.having.Having
 import com.yahoo.bard.webservice.druid.model.orderby.LimitSpec
 import com.yahoo.bard.webservice.druid.model.query.AbstractDruidAggregationQuery
 import com.yahoo.bard.webservice.druid.model.query.DruidQuery
-import com.yahoo.bard.webservice.data.time.Granularity
 import com.yahoo.bard.webservice.druid.model.query.GroupByQuery
 import com.yahoo.bard.webservice.druid.model.query.TimeSeriesQuery
 import com.yahoo.bard.webservice.sql.builders.SimpleDruidQueryBuilder
 import com.yahoo.bard.webservice.table.Column
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -78,7 +78,7 @@ import spock.lang.Unroll
 import java.util.function.Function
 
 class DefaultSqlBackedClientSpec extends Specification {
-    private static SqlBackedClient sqlBackedClient = new DefaultSqlBackedClient(Database.getDataSource(), new ObjectMapper())
+    private static SqlBackedClient sqlBackedClient = new DefaultSqlBackedClient(Database.getDataSource(), new ObjectMappersSuite().mapper)
     private static final String TRUE = "TRUE"
     private static final String FALSE = "FALSE"
     private static final String FIRST_COMMENT = "added project"

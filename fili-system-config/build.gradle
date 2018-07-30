@@ -1,6 +1,35 @@
 
 description = 'Fili: system configuration library'
-dependencies {
-    compile "commons-configuration:commons-configuration:1.10"
-    compile "org.springframework:spring-core:4.3.4.RELEASE"
+
+def moduleJars = "$buildDir/moduleJars"
+def jar1Out = "$moduleJars/jars/fili-system-config-test1.jar"
+def jar2Out = "$moduleJars/jars/fili-system-config-test2.jar"
+
+sourceSets {
+    test {
+        runtimeClasspath += fileTree(dir: "$moduleJars")
+    }
 }
+
+dependencies {
+    compile 'commons-configuration:commons-configuration:1.10'
+    compile 'org.springframework:spring-core:4.3.4.RELEASE'
+}
+
+task printClasspath {
+    doLast {
+        sourceSets.test.runtimeClasspath.each { println it }
+    }
+}
+
+task generateTestResources(type: Task) {
+    inputs.dir('$projectDir/src/test/resources')
+    outputs.files jar1Out, jar2Out
+
+    ant.delete(dir: "$buildDir/moduleJars")
+    ant.mkdir(dir: "$buildDir/moduleJars/jars")
+    ant.jar( basedir: "$projectDir/src/test/resources/jar1-contents", destfile: jar1Out)
+    ant.jar( basedir: "$projectDir/src/test/resources/jar2-contents", destfile: jar2Out)
+}
+
+compileGroovy.dependsOn generateTestResources

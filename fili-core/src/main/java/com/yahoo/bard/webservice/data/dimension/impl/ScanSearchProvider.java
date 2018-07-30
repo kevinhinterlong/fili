@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.data.dimension.impl;
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite;
 import com.yahoo.bard.webservice.data.cache.HashDataCache.Pair;
 import com.yahoo.bard.webservice.data.dimension.Dimension;
 import com.yahoo.bard.webservice.data.dimension.DimensionField;
@@ -49,7 +50,7 @@ public class ScanSearchProvider implements SearchProvider, FilterDimensionRows {
      */
     public ScanSearchProvider() {
         // TODO: Make this use the shared Object Mapper
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = new ObjectMappersSuite().getMapper();
     }
 
     @Override

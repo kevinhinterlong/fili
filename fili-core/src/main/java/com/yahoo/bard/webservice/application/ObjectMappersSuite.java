@@ -4,7 +4,9 @@ package com.yahoo.bard.webservice.application;
 
 import com.yahoo.bard.webservice.druid.model.metadata.ShardSpecMixIn;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -36,6 +38,8 @@ public class ObjectMappersSuite {
         jsonMapper.registerModule(jodaModule);
         jsonMapper.registerModule(new Jdk8Module().configureAbsentsAsNulls(false));
         jsonMapper.registerModule(new AfterburnerModule());
+        jsonMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+        jsonMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
     /**

@@ -1,12 +1,11 @@
 package com.yahoo.wiki.webservice.web.endpoints
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain
 import com.yahoo.bard.webservice.models.druid.client.impl.TestDruidWebService
 import com.yahoo.wiki.webservice.data.config.auto.DataSourceConfiguration
 import com.yahoo.wiki.webservice.data.config.auto.DruidNavigator
 import com.yahoo.wiki.webservice.data.config.auto.TableConfig
-
-import com.fasterxml.jackson.databind.ObjectMapper
 
 import spock.lang.Specification
 
@@ -48,7 +47,7 @@ class AutomaticDruidConfigLoaderSpec extends Specification {
 
     def setup() {
         druidWebService = new TestDruidWebService("testInstance")
-        druidNavigator = new DruidNavigator(druidWebService, new ObjectMapper())
+        druidNavigator = new DruidNavigator(druidWebService, new ObjectMappersSuite().mapper)
         druidWebService.jsonResponse = {
             if (druidWebService.lastUrl == "/datasources/") {
                 return expectedDataSources

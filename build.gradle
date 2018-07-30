@@ -9,7 +9,6 @@ allprojects {
 subprojects {
     apply plugin: 'groovy'
     apply plugin: 'java'
-//    apply plugin: 'checkstyle'
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     tasks.withType(JavaCompile) {
@@ -24,8 +23,7 @@ subprojects {
     artifacts.archives packageSources
     repositories {
         mavenLocal()
-
-        maven { url "http://repo.maven.apache.org/maven2" }
+        mavenCentral()
     }
 
     configurations.all {
@@ -40,11 +38,5 @@ subprojects {
         testCompile group: 'org.objenesis', name: 'objenesis', version: '2.4'
         testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     }
-//    checkstyle {
-//        toolVersion "8.11"
-//        configFile = rootProject.file('checkstyle-style.xml') as File
-//        showViolations = true
-//        ignoreFailures = false
-//    }
 
 }

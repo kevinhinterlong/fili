@@ -2,15 +2,11 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.logging;
 
+import com.yahoo.bard.webservice.application.ObjectMappersSuite;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
-
-import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +21,7 @@ public class JsonLogFormatter implements LogFormatter {
      *  Configure ObjectMapper.
      */
     public JsonLogFormatter() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule((new JodaModule()).addSerializer(Interval.class, new ToStringSerializer()));
-        objectMapper.registerModule(new Jdk8Module().configureAbsentsAsNulls(false));
-        objectMapper.registerModule(new AfterburnerModule());
+        objectMapper = new ObjectMappersSuite().getMapper();
     }
 
     @Override
