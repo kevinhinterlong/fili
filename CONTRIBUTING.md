@@ -37,7 +37,7 @@ and the fact that it uses [Groovy](http://www.groovy-lang.org/). :smile:
 We also strive for very high-quality code, with the belief that quality code is easier to maintain, easier to understand,
 and has fewer bugs. To help keep the quality bar high, we have an automated style checker ([Checkstyle](http://checkstyle.sourceforge.net/)) 
 with rules that _should_ catch most of the common style issues. The full details of what the checker looks for can be 
-found in our [checkstyle config](checkstyle-style.xml), but the [Google Java style guide](https://google.github.io/styleguide/javaguide.html) 
+found in our [checkstyle config](config/checkstyle/checkstyle.xml), but the [Google Java style guide](https://google.github.io/styleguide/javaguide.html) 
 covers most of it, and is very close to our style.
 
 ### Credit

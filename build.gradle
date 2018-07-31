@@ -9,6 +9,8 @@ allprojects {
 subprojects {
     apply plugin: 'groovy'
     apply plugin: 'java'
+    apply plugin: 'checkstyle'
+    apply plugin: 'codenarc'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -39,4 +41,21 @@ subprojects {
         testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     }
 
+    checkstyle {
+        toolVersion = '8.2'
+        ignoreFailures = false
+        showViolations = true
+    }
+    checkstyleMain {
+        source = 'src/main/java'
+    }
+    checkstyleTest {
+        source = 'src/test/java'
+    }
+    codenarcTest {
+        source = 'src/test/groovy'
+        maxPriority1Violations = 1
+        maxPriority2Violations = 1
+        maxPriority3Violations = 1
+    }
 }
