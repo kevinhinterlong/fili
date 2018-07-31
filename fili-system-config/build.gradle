@@ -1,7 +1,7 @@
 
 description = 'Fili: system configuration library'
 
-def moduleJars = "$buildDir/moduleJars"
+def moduleJars = "$buildDir/classes/java/main"
 def jar1Out = "$moduleJars/jars/fili-system-config-test1.jar"
 def jar2Out = "$moduleJars/jars/fili-system-config-test2.jar"
 
@@ -26,8 +26,8 @@ task generateTestResources(type: Task) {
     inputs.dir('$projectDir/src/test/resources')
     outputs.files jar1Out, jar2Out
 
-    ant.delete(dir: "$buildDir/moduleJars")
-    ant.mkdir(dir: "$buildDir/moduleJars/jars")
+    ant.delete(dir: "$moduleJars")
+    ant.mkdir(dir: "$moduleJars")
     ant.jar( basedir: "$projectDir/src/test/resources/jar1-contents", destfile: jar1Out)
     ant.jar( basedir: "$projectDir/src/test/resources/jar2-contents", destfile: jar2Out)
 }
