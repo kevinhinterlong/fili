@@ -2,6 +2,8 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.data.dimension.impl
 
+import com.yahoo.bard.webservice.config.SystemConfig
+import com.yahoo.bard.webservice.config.SystemConfigProvider
 import com.yahoo.bard.webservice.data.dimension.BardDimensionField
 import com.yahoo.bard.webservice.data.dimension.DimensionRow
 import com.yahoo.bard.webservice.data.dimension.KeyValueStore
@@ -17,16 +19,23 @@ import spock.lang.Ignore
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+import javax.validation.constraints.NotNull
+
 /**
  * Specification for behavior specific to the LuceneSearchProvider
  */
 class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> {
+    private static final SystemConfig SYSTEM_CONFIG = SystemConfigProvider.getInstance();
+    private static final @NotNull String LUCENE_INDEX_PATH = SYSTEM_CONFIG.getPackageVariableName("lucene_index_path");
 
     int rowLimit
     int searchTimeout
 
-    String sourceDir
-    String destinationDir
+//    String sourceDir
+//    String destinationDir
 
     Path sourcePath
     Path file1
@@ -43,24 +52,19 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
         rowLimit = searchProvider.maxResults
         searchTimeout = searchProvider.searchTimeout
 
-        sourceDir = "target/tmp/dimensionCache/animal/new_lucene_indexes"
-        destinationDir = "target/tmp/dimensionCache/animal/lucene_indexes"
+//        sourceDir = "target/tmp/dimensionCache/animal/new_lucene_indexes"
+//        destinationDir = "target/tmp/dimensionCache/animal/lucene_indexes"
 
-        sourcePath = Files.createDirectory(new File(sourceDir).getAbsoluteFile().toPath())
-        destinationPath = new File(destinationDir).getAbsoluteFile().toPath()
+        sourcePath = Files.createTempDirectory("src").toAbsolutePath()
+        destinationPath = Files.createTempDirectory("dest").toAbsolutePath()
+        SYSTEM_CONFIG.setProperty(LUCENE_INDEX_PATH, sourcePath.toString())
 
-        file1 = sourcePath.resolve("segments_1")
-        file2 = sourcePath.resolve("_1.cfs")
-        file3 = sourcePath.resolve("_1.si")
-        subDir = sourcePath.resolve("subDir")
+        file1 = Files.createTempFile(sourcePath, "", "segments_1").toAbsolutePath()
+        file2 = Files.createTempFile(sourcePath, "", "_1.cfs").toAbsolutePath()
+        file3 = Files.createTempFile(sourcePath, "", "_1.si").toAbsolutePath()
+        subDir = Files.createTempDirectory(sourcePath, "subDir").toAbsolutePath()
 
-        Files.createFile(file1)
-        Files.createFile(file2)
-        Files.createFile(file3)
-        Files.createDirectory(subDir)
-
-        file4 = subDir.resolve("subDirFile")
-        Files.createFile(file4)
+        file4 = Files.createTempFile(subDir, "", "subDirFile").toAbsolutePath()
     }
 
     @Override
@@ -68,7 +72,13 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
         searchProvider.maxResults = rowLimit
         searchProvider.searchTimeout = searchTimeout
 
-        FileUtils.deleteDirectory(new File(sourceDir))
+        sourcePath.toFile().deleteOnExit()
+        file1.toFile().deleteOnExit()
+        file2.toFile().deleteOnExit()
+        file3.toFile().deleteOnExit()
+        subDir.toFile().deleteOnExit()
+        file4.toFile().deleteOnExit()
+        destinationPath.toFile().deleteOnExit()
     }
 
     @Override
@@ -77,8 +87,9 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
     }
 
     @Override
-    void cleanSearchProvider(String dimensionName) {
-        LuceneSearchProviderManager.removeInstance(dimensionName)
+    synchronized void cleanSearchProvider(String dimensionName) {
+        LuceneSearchProviderManager.LUCENE_SEARCH_PROVIDERS.remove(dimensionName)
+//        LuceneSearchProviderManager.removeInstance(dimensionName)
     }
 
     def "findAllDimensionRows throws exception when the lucene search timeout is reached"() {
@@ -147,14 +158,14 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
         Files.exists(subDir)
         Files.exists(file4)
 
-        !Files.exists(destinationPath.resolve("segments_1"))
-        !Files.exists(destinationPath.resolve("_1.cfs"))
-        !Files.exists(destinationPath.resolve("_1.si"))
-        !Files.exists(destinationPath.resolve("subDir"))
-        !Files.exists(destinationPath.resolve("subDir").resolve("subDirFile"))
+        !Files.exists(destinationPath.resolve(file1.fileName))
+        !Files.exists(destinationPath.resolve(file2.fileName))
+        !Files.exists(destinationPath.resolve(file3.fileName))
+        !Files.exists(destinationPath.resolve(subDir.fileName))
+        !Files.exists(destinationPath.resolve(subDir.fileName).resolve(file4.fileName))
 
         when:
-        searchProvider.moveDirEntries(sourceDir, destinationDir)
+        searchProvider.moveDirEntries(sourcePath.toString(), destinationPath.toString())
 
         then:
         Files.exists(sourcePath)
@@ -165,11 +176,11 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
         !Files.exists(file4)
 
         and:
-        Files.exists(destinationPath.resolve("segments_1"))
-        Files.exists(destinationPath.resolve("_1.cfs"))
-        Files.exists(destinationPath.resolve("_1.si"))
-        Files.exists(destinationPath.resolve("subDir"))
-        Files.exists(destinationPath.resolve("subDir").resolve("subDirFile"))
+        Files.exists(destinationPath.resolve(file1.fileName))
+        Files.exists(destinationPath.resolve(file2.fileName))
+        Files.exists(destinationPath.resolve(file3.fileName))
+        Files.exists(destinationPath.resolve(subDir.fileName))
+        Files.exists(destinationPath.resolve(subDir.fileName).resolve(file4.fileName))
     }
 
     def "deleteDir deletes all entries under a specified directory including the directory itself"() {
@@ -182,7 +193,7 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
         Files.exists(file4)
 
         when:
-        searchProvider.deleteDir(sourceDir)
+        searchProvider.deleteDir(sourcePath.toString())
 
         then:
         !Files.exists(sourcePath)
@@ -206,18 +217,18 @@ class LuceneSearchProviderSpec extends SearchProviderSpec<LuceneSearchProvider> 
 
         when:
         // source = "target/tmp/dimensionCache/animal/new_lucene_indexes", where new indexes come from
-        searchProvider.replaceIndex(sourceDir)
+        searchProvider.replaceIndex(sourcePath.toString())
 
         then:
         Files.exists(destinationPath)
         !Files.exists(oldIndexFile)
 
         and:
-        Files.exists(destinationPath.resolve("segments_1"))
-        Files.exists(destinationPath.resolve("_1.cfs"))
-        Files.exists(destinationPath.resolve("_1.si"))
-        Files.exists(destinationPath.resolve("subDir"))
-        Files.exists(destinationPath.resolve("subDir").resolve("subDirFile"))
+        Files.exists(destinationPath.resolve(file1.fileName))
+        Files.exists(destinationPath.resolve(file2.fileName))
+        Files.exists(destinationPath.resolve(file3.fileName))
+        Files.exists(destinationPath.resolve(subDir.fileName))
+        Files.exists(destinationPath.resolve(subDir.fileName).resolve(file4.fileName))
     }
 
     @Override
