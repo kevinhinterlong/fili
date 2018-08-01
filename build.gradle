@@ -11,6 +11,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: 'codenarc'
+//    apply plugin: 'findbugs'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -58,4 +59,18 @@ subprojects {
         maxPriority2Violations = 1
         maxPriority3Violations = 1
     }
+//    findbugs {
+//        ignoreFailures = false
+//        toolVersion = '3.0.1'
+//        sourceSets=[sourceSets.main]
+//        //excludeFilter = file('config/findbugs/excludeFilter.xml')
+//        reportsDir = file("$buildDir/reports/findbugs")
+//        effort = "max"
+//    }
+//    tasks.withType(FindBugs) {
+//        reports {
+//            xml.enabled false
+//            html.enabled true
+//        }
+//    }
 }
