@@ -14,6 +14,7 @@ import javax.ws.rs.core.UriInfo;
 public class ResponseUtils {
 
     public static final int MAX_EXCEL_FILE_PATH_LENGTH = 218;
+    private static final String CSV_EXT = ".csv";
 
     /**
      * This method will get the path segments and the interval (if it is part of the request) from the apiRequest and
@@ -43,8 +44,10 @@ public class ResponseUtils {
             interval = "_" + interval.replace("/", "_").replace(",", "__");
         }
 
-        String rawFilePath = uriPath + interval + ".csv";
-        String truncatedFilePath = rawFilePath.substring(0, Math.min(rawFilePath.length(), MAX_EXCEL_FILE_PATH_LENGTH));
-        return "attachment; filename=" + truncatedFilePath;
+        String rawFilePath = uriPath + interval;
+        int maxLength = MAX_EXCEL_FILE_PATH_LENGTH - CSV_EXT.length();
+        String truncatedRawFilePath = rawFilePath.substring(0, Math.min(rawFilePath.length(), maxLength));
+        String filename = truncatedRawFilePath + CSV_EXT;
+        return "attachment; filename=" + filename;
     }
 }
